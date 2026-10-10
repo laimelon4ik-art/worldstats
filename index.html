@@ -1758,7 +1758,9 @@
 
       function showIceFailure(code) {
         if (roomCode !== code) return;
-        $("roomStatus").textContent = "The room was found, but this network blocked the device-to-device link. The host can stay in the room; try both devices on the same Wi-Fi. Some networks need a TURN relay.";
+        $("roomStatus").textContent = turnCredentialsEndpoint
+          ? "The room was found, but the device-to-device link failed even with the TURN relay. Try another network or check the relay configuration."
+          : "The room was found, but this game has no TURN relay configured yet. Your network blocks direct connections. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
       }
 
       async function joinRoom() {
@@ -1859,17 +1861,23 @@
 
       function handleIncomingConnection(connection) {
         connection.on("error", () => {
-          $("roomStatus").textContent = "A friend found the room, but their network could not establish the WebRTC link. Try both devices on the same Wi-Fi; some networks need a TURN relay.";
+          $("roomStatus").textContent = turnCredentialsEndpoint
+            ? "A friend found the room, but their network could not establish the WebRTC link. Check the relay setup or try the same Wi-Fi."
+            : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
         });
         connection.on("iceStateChanged", (state) => {
           if (state === "failed") {
-            $("roomStatus").textContent = "A friend found the room, but their network blocked the direct link. A TURN relay may be required.";
+            $("roomStatus").textContent = turnCredentialsEndpoint
+              ? "A friend found the room, but their network could not establish the link. Check the relay setup or try the same Wi-Fi."
+              : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
           }
         });
         if (connection.peerConnection) {
           connection.peerConnection.addEventListener("iceconnectionstatechange", () => {
             if (connection.peerConnection.iceConnectionState === "failed") {
-              $("roomStatus").textContent = "A friend found the room, but their network blocked the direct link. A TURN relay may be required.";
+              $("roomStatus").textContent = turnCredentialsEndpoint
+                ? "A friend found the room, but their network could not establish the link. Check the relay setup or try the same Wi-Fi."
+                : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
             }
           });
         }
