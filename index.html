@@ -462,12 +462,6 @@
           var(--panel);
         box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65), 0 0 55px rgba(74, 124, 255, 0.16);
         text-align: center;
-        transform: translateY(18px) scale(0.97);
-        transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
-      }
-
-      .case-opening-overlay.active .case-opening-panel {
-        transform: translateY(0) scale(1);
       }
 
       .case-opening-eyebrow {
@@ -1950,7 +1944,11 @@
           overlay.classList.add("active");
           requestAnimationFrame(() => {
             const winner = reel.children[winnerIndex];
-            const offset = overlay.clientWidth / 2 - (winner.offsetLeft + winner.offsetWidth / 2);
+            const reelWindow = reel.parentElement;
+            const windowBounds = reelWindow.getBoundingClientRect();
+            const winnerBounds = winner.getBoundingClientRect();
+            const offset = windowBounds.left + windowBounds.width / 2 -
+              (winnerBounds.left + winnerBounds.width / 2);
             reel.style.transition = reducedMotion
               ? "none"
               : "transform " + rollDuration + "ms cubic-bezier(.08,.72,.08,1)";
