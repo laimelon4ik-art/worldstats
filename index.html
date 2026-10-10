@@ -226,12 +226,12 @@
         animation: casePulse 2.8s ease-in-out infinite;
       }
 
-      .case-box.legendary { --case-accent: #ffd36a; --case-accent-rgb: 255, 211, 106; }
-      .case-box.ultra { --case-accent: #ff557e; --case-accent-rgb: 255, 85, 126; }
-      .case-box.mythical { --case-accent: #ec77ff; --case-accent-rgb: 236, 119, 255; }
+      .case-box.legendary { --case-accent: #ffd84d; --case-accent-rgb: 255, 216, 77; }
+      .case-box.ultra { --case-accent: #f5f9ff; --case-accent-rgb: 245, 249, 255; }
+      .case-box.mythical { --case-accent: #ff5268; --case-accent-rgb: 255, 82, 104; }
       .case-box.epic { --case-accent: #d39bff; --case-accent-rgb: 211, 155, 255; }
-      .case-box.super-rare { --case-accent: #44e3bb; --case-accent-rgb: 68, 227, 187; }
-      .case-box.rare { --case-accent: #74d0ff; --case-accent-rgb: 116, 208, 255; }
+      .case-box.super-rare { --case-accent: #4e9bff; --case-accent-rgb: 78, 155, 255; }
+      .case-box.rare { --case-accent: #48db7a; --case-accent-rgb: 72, 219, 122; }
 
       .case-art {
         position: relative;
@@ -415,12 +415,223 @@
         font-size: 1rem;
       }
 
-      .legendary { color: var(--gold); }
-      .ultra { color: #ff557e; }
-      .mythical { color: #ec77ff; }
+      .case-opening-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 6000;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        overflow: hidden;
+        background: radial-gradient(ellipse at center, rgba(28, 46, 75, 0.82), rgba(2, 6, 13, 0.96) 72%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .case-opening-overlay.active {
+        opacity: 1;
+      }
+
+      .case-opening-overlay::before,
+      .case-opening-overlay::after {
+        content: "";
+        position: absolute;
+        width: min(78vw, 780px);
+        aspect-ratio: 1;
+        border: 1px solid rgba(114, 240, 255, 0.12);
+        border-radius: 50%;
+        box-shadow: 0 0 70px rgba(74, 124, 255, 0.12), inset 0 0 70px rgba(74, 124, 255, 0.08);
+        pointer-events: none;
+      }
+
+      .case-opening-overlay::after {
+        width: min(58vw, 580px);
+        border-color: rgba(211, 155, 255, 0.1);
+      }
+
+      .case-opening-panel {
+        position: relative;
+        z-index: 1;
+        width: min(720px, 100%);
+        padding: clamp(22px, 5vw, 42px);
+        overflow: hidden;
+        border: 1px solid rgba(114, 240, 255, 0.28);
+        border-radius: 22px;
+        background:
+          linear-gradient(135deg, rgba(23, 42, 64, 0.97), rgba(6, 13, 24, 0.98)),
+          var(--panel);
+        box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65), 0 0 55px rgba(74, 124, 255, 0.16);
+        text-align: center;
+        transform: translateY(18px) scale(0.97);
+        transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
+      }
+
+      .case-opening-overlay.active .case-opening-panel {
+        transform: translateY(0) scale(1);
+      }
+
+      .case-opening-eyebrow {
+        margin: 0 0 9px;
+        color: var(--cyan);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.24em;
+      }
+
+      .case-opening-title {
+        margin: 0 0 26px;
+        color: #f5f9ff;
+        font-size: clamp(1.25rem, 4vw, 2rem);
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-shadow: 0 0 24px rgba(114, 240, 255, 0.28);
+      }
+
+      .case-reel-window {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        background: rgba(2, 7, 14, 0.78);
+        box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.65);
+      }
+
+      .case-reel-window::before,
+      .case-reel-window::after {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        bottom: 0;
+        width: 14%;
+        pointer-events: none;
+      }
+
+      .case-reel-window::before {
+        left: 0;
+        background: linear-gradient(90deg, rgba(2, 7, 14, 0.96), transparent);
+      }
+
+      .case-reel-window::after {
+        right: 0;
+        background: linear-gradient(270deg, rgba(2, 7, 14, 0.96), transparent);
+      }
+
+      .case-reel-pointer {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px;
+        background: var(--cyan);
+        box-shadow: 0 0 12px var(--cyan), 0 0 26px rgba(114, 240, 255, 0.75);
+        transform: translateX(-50%);
+      }
+
+      .case-reel-pointer::before,
+      .case-reel-pointer::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-right: 7px solid transparent;
+        border-left: 7px solid transparent;
+        transform: translateX(-50%);
+      }
+
+      .case-reel-pointer::before {
+        top: 0;
+        border-top: 10px solid var(--cyan);
+      }
+
+      .case-reel-pointer::after {
+        bottom: 0;
+        border-bottom: 10px solid var(--cyan);
+      }
+
+      .case-reel {
+        display: flex;
+        width: max-content;
+        gap: 10px;
+        padding: 19px calc(50% - 52px);
+        transform: translateX(0);
+        will-change: transform;
+      }
+
+      .case-reel-card {
+        --reel-color: #74d0ff;
+        flex: 0 0 104px;
+        height: 122px;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 12px;
+        border: 1px solid color-mix(in srgb, var(--reel-color) 55%, transparent);
+        border-radius: 10px;
+        background:
+          linear-gradient(145deg, color-mix(in srgb, var(--reel-color) 22%, transparent), rgba(9, 17, 29, 0.94)),
+          #101a27;
+        box-shadow: inset 0 -3px 0 var(--reel-color), 0 8px 20px rgba(0, 0, 0, 0.25);
+        color: var(--reel-color);
+        transition: filter 0.25s ease, transform 0.25s ease;
+      }
+
+      .case-reel-card strong {
+        max-width: 94px;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.07em;
+        line-height: 1.25;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .case-reel-icon {
+        font-size: 28px;
+        filter: drop-shadow(0 0 10px currentColor);
+      }
+
+      .case-reel-card.ultra { --reel-color: #f5f9ff; }
+      .case-reel-card.legendary { --reel-color: #ffd84d; }
+      .case-reel-card.mythical { --reel-color: #ff5268; }
+      .case-reel-card.epic { --reel-color: #d39bff; }
+      .case-reel-card.super-rare { --reel-color: #4e9bff; }
+      .case-reel-card.rare { --reel-color: #48db7a; }
+
+      .case-opening-status {
+        min-height: 18px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+      }
+
+      .case-opening-overlay.revealed .case-opening-panel {
+        animation: caseReveal 0.65s cubic-bezier(.15,.85,.25,1) both;
+      }
+
+      .case-opening-overlay.revealed .case-reel-card.winner {
+        filter: brightness(1.55);
+        transform: scale(1.08);
+        box-shadow: inset 0 -4px 0 var(--reel-color), 0 0 35px color-mix(in srgb, var(--reel-color) 70%, transparent);
+      }
+
+      @keyframes caseReveal {
+        0% { transform: translateY(0) scale(1); }
+        45% { transform: translateY(-8px) scale(1.025); }
+        100% { transform: translateY(0) scale(1); }
+      }
+
+      .legendary { color: #ffd84d; }
+      .ultra { color: #f5f9ff; }
+      .mythical { color: #ff5268; }
       .epic { color: var(--purple); }
-      .super-rare { color: #44e3bb; }
-      .rare { color: #74d0ff; }
+      .super-rare { color: #4e9bff; }
+      .rare { color: #48db7a; }
 
       .game-view.blindfolded #streetView {
         filter: blur(24px) brightness(0.24);
@@ -455,9 +666,17 @@
       @media (prefers-reduced-motion: reduce) {
         .case-box,
         .case-box.opening,
-        .case-box.opening::after {
+        .case-box.opening::after,
+        .case-opening-overlay,
+        .case-opening-panel,
+        .case-opening-overlay.revealed .case-opening-panel,
+        .case-reel-card {
           animation: none;
           transition: none;
+        }
+
+        .case-reel {
+          scroll-behavior: auto;
         }
       }
 
@@ -1320,6 +1539,18 @@
 
     <div id="notice" class="hidden"></div>
 
+    <div id="caseOpeningOverlay" class="case-opening-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="caseOpeningTitle" aria-live="polite">
+      <section class="case-opening-panel">
+        <p class="case-opening-eyebrow">WORLD TOUR · SUPPLY DROP</p>
+        <h2 id="caseOpeningTitle" class="case-opening-title">Unlocking your case</h2>
+        <div class="case-reel-window">
+          <div id="caseReel" class="case-reel"></div>
+          <div class="case-reel-pointer" aria-hidden="true"></div>
+        </div>
+        <p id="caseOpeningStatus" class="case-opening-status">SCANNING REWARD TIERS</p>
+      </section>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
       "use strict";
@@ -1427,6 +1658,7 @@
       let roundDeadline = 0;
       let roundTimerInterval = null;
       let blindfoldTimeout = null;
+      let caseRevealTimeout = null;
       let roundExpired = false;
       let roundFinalized = false;
       let gameOrder = [];
@@ -1585,6 +1817,7 @@
       }
 
       function prepareRound(index, placeIndex, broadcast, heading, deadline) {
+        clearCaseReveal();
         if (index >= roundsPerGame) {
           finishGame();
           return;
@@ -1654,6 +1887,10 @@
         const place = activePlace();
         const roll = Math.random() * 100;
         const reward = rewards.find((item) => roll < item.threshold);
+        if (!reward) {
+          notify("The supply drop could not determine a reward. Please try again.");
+          return;
+        }
         const hints = {
           coordinates: "Exact coordinates: " + place.lat.toFixed(4) + ", " + place.lon.toFixed(4),
           street: "Street-level area: " + place.name,
@@ -1661,9 +1898,85 @@
           country: "Country: " + place.country,
           continent: "Continent: " + place.continent,
         };
-        applyCaseReward(reward, hints[reward.type]);
-        highlightCaseReward(reward.type, place);
-        if (reward.name === "Ultra") triggerUltraBlindfold();
+        caseUsed = true;
+        caseAvailable = 0;
+        $("openCaseButton").disabled = true;
+        $("casesLeft").textContent = "Opening supply drop…";
+        playCaseReveal(reward, () => {
+          applyCaseReward(reward, hints[reward.type]);
+          highlightCaseReward(reward.type, place, reward.css);
+          if (reward.name === "Ultra") triggerUltraBlindfold();
+        });
+      }
+
+      function playCaseReveal(reward, onComplete) {
+        const overlay = $("caseOpeningOverlay");
+        const reel = $("caseReel");
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const winnerIndex = 23;
+        const rollDuration = reducedMotion ? 0 : 3100;
+
+        clearCaseReveal();
+        reel.replaceChildren();
+        for (let index = 0; index < 27; index++) {
+          const item = index === winnerIndex
+            ? reward
+            : rewards.find((entry) => Math.random() * 100 < entry.threshold);
+          if (!item) {
+            notify("The supply drop animation could not be prepared.");
+            return;
+          }
+          const card = document.createElement("div");
+          card.className = "case-reel-card " + item.css;
+          card.setAttribute("aria-hidden", "true");
+          const icon = document.createElement("span");
+          icon.className = "case-reel-icon";
+          icon.textContent = item.emoji;
+          const name = document.createElement("strong");
+          name.textContent = item.name;
+          card.append(icon, name);
+          if (index === winnerIndex) card.classList.add("winner");
+          reel.append(card);
+        }
+
+        overlay.classList.remove("revealed");
+        overlay.classList.remove("hidden");
+        $("caseOpeningTitle").textContent = "Unlocking your case";
+        $("caseOpeningStatus").textContent = "SCANNING REWARD TIERS";
+        reel.style.transition = "none";
+        reel.style.transform = "translateX(0)";
+        void reel.offsetWidth;
+        requestAnimationFrame(() => {
+          overlay.classList.add("active");
+          requestAnimationFrame(() => {
+            const winner = reel.children[winnerIndex];
+            const offset = overlay.clientWidth / 2 - (winner.offsetLeft + winner.offsetWidth / 2);
+            reel.style.transition = reducedMotion
+              ? "none"
+              : "transform " + rollDuration + "ms cubic-bezier(.08,.72,.08,1)";
+            reel.style.transform = "translateX(" + offset + "px)";
+          });
+        });
+
+        caseRevealTimeout = setTimeout(() => {
+          overlay.classList.add("revealed");
+          $("caseOpeningTitle").textContent = reward.name.toUpperCase() + " DROP";
+          $("caseOpeningStatus").textContent = reward.chance + "% DROP · REWARD SECURED";
+          caseRevealTimeout = setTimeout(() => {
+            overlay.classList.add("hidden");
+            overlay.classList.remove("active", "revealed");
+            onComplete();
+          }, reducedMotion ? 250 : 850);
+        }, rollDuration);
+      }
+
+      function clearCaseReveal() {
+        clearTimeout(caseRevealTimeout);
+        caseRevealTimeout = null;
+        const overlay = $("caseOpeningOverlay");
+        if (!overlay) return;
+        overlay.classList.add("hidden");
+        overlay.classList.remove("active", "revealed");
       }
 
       function applyCaseReward(reward, hint) {
@@ -1688,12 +2001,20 @@
         $("caseEmoji").textContent = reward.emoji;
       }
 
-      function highlightCaseReward(type, place) {
+      function highlightCaseReward(type, place, rarity) {
         if (!map || !resultLayer) return;
         const center = [place.lat, place.lon];
         let layer;
         let bounds;
         let label;
+        const highlightColor = {
+          rare: "#48db7a",
+          "super-rare": "#4e9bff",
+          epic: "#d39bff",
+          mythical: "#ff5268",
+          legendary: "#ffd84d",
+          ultra: "#f5f9ff",
+        }[rarity] || "#72f0ff";
 
         if (type === "continent" || type === "country") {
           const region = type === "continent" ? place.continent : place.country;
@@ -1704,8 +2025,8 @@
           }
           bounds = L.latLngBounds(regionBounds);
           layer = L.rectangle(bounds, {
-            color: type === "continent" ? "#49e6ff" : "#44e3bb",
-            fillColor: type === "continent" ? "#49e6ff" : "#44e3bb",
+            color: highlightColor,
+            fillColor: highlightColor,
             fillOpacity: 0.2,
             weight: 3,
             dashArray: type === "continent" ? "10 7" : "6 5",
@@ -1715,8 +2036,8 @@
         } else if (type === "city") {
           layer = L.circle(center, {
             radius: 9000,
-            color: "#d39bff",
-            fillColor: "#d39bff",
+            color: highlightColor,
+            fillColor: highlightColor,
             fillOpacity: 0.22,
             weight: 3,
             interactive: false,
@@ -1726,8 +2047,8 @@
           const radius = type === "street" ? 650 : 180;
           layer = L.circle(center, {
             radius,
-            color: type === "street" ? "#ec77ff" : "#ff557e",
-            fillColor: type === "street" ? "#ec77ff" : "#ff557e",
+            color: highlightColor,
+            fillColor: highlightColor,
             fillOpacity: 0.3,
             weight: 4,
             interactive: false,
