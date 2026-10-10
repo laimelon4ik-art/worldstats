@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WorldStats</title>
+    <link rel="preconnect" href="https://maps.google.com" />
+    <link rel="preconnect" href="https://maps.googleapis.com" />
+    <link rel="preconnect" href="https://maps.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
       :root {
@@ -368,17 +371,18 @@
       }
 
       .case-box.opening {
-        animation: popCase 0.85s cubic-bezier(.2,.8,.2,1);
+        animation: popCase 1.6s cubic-bezier(.2,.8,.2,1);
       }
 
       .case-box.opening::after {
-        animation: caseSheen 0.8s ease-out;
+        animation: caseSheen 1.5s ease-out;
       }
 
       @keyframes popCase {
         0% { transform: scale(1); }
-        28% { transform: scale(1.045) rotate(-1deg); }
-        58% { transform: scale(0.99) rotate(0.4deg); }
+        22% { transform: scale(1.035) rotate(-0.8deg); }
+        46% { transform: scale(0.975) rotate(0.5deg); }
+        68% { transform: scale(1.025) rotate(-0.25deg); }
         100% { transform: scale(1); }
       }
 
@@ -442,11 +446,18 @@
         border-radius: 50%;
         box-shadow: 0 0 70px rgba(74, 124, 255, 0.12), inset 0 0 70px rgba(74, 124, 255, 0.08);
         pointer-events: none;
+        animation: caseOrbit 18s linear infinite;
       }
 
       .case-opening-overlay::after {
         width: min(58vw, 580px);
         border-color: rgba(211, 155, 255, 0.1);
+        animation-direction: reverse;
+        animation-duration: 13s;
+      }
+
+      @keyframes caseOrbit {
+        to { transform: rotate(360deg) scale(1.04); }
       }
 
       .case-opening-panel {
@@ -604,6 +615,132 @@
         letter-spacing: 0.2em;
       }
 
+      .post-match-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 6500;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        overflow: auto;
+        background: rgba(2, 6, 13, 0.88);
+        backdrop-filter: blur(12px);
+      }
+
+      .post-match-panel {
+        width: min(760px, 100%);
+        max-height: 100%;
+        overflow: auto;
+        padding: clamp(20px, 4vw, 34px);
+        border: 1px solid rgba(114, 240, 255, 0.25);
+        border-radius: 22px;
+        background: linear-gradient(145deg, rgba(23, 42, 64, 0.99), rgba(6, 13, 24, 0.99));
+        box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65);
+      }
+
+      .post-match-panel h2 {
+        margin: 0;
+        font-size: clamp(1.6rem, 5vw, 2.4rem);
+      }
+
+      .post-match-panel h3 {
+        margin: 22px 0 10px;
+        color: var(--muted);
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .post-match-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .post-match-stat {
+        padding: 13px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .post-match-stat span,
+      .post-match-stat strong {
+        display: block;
+      }
+
+      .post-match-stat span {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .post-match-stat strong {
+        margin-top: 7px;
+        font-size: 1.35rem;
+      }
+
+      .post-match-standings {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .post-match-standings li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .post-match-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+      }
+
+      .post-match-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      .post-match-table th,
+      .post-match-table td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .post-match-table th {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .post-match-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .post-match-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .post-match-actions button {
+        flex: 1;
+      }
+
       .case-opening-overlay.revealed .case-opening-panel {
         animation: caseReveal 0.65s cubic-bezier(.15,.85,.25,1) both;
       }
@@ -662,6 +799,8 @@
         .case-box.opening,
         .case-box.opening::after,
         .case-opening-overlay,
+        .case-opening-overlay::before,
+        .case-opening-overlay::after,
         .case-opening-panel,
         .case-opening-overlay.revealed .case-opening-panel,
         .case-reel-card {
@@ -1082,6 +1221,18 @@
         padding: 9px 12px;
       }
 
+      .scene-tip {
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(7, 15, 21, 0.72);
+        color: #e6f4fc;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        backdrop-filter: blur(8px);
+      }
+
       .sidebar {
         min-width: 0;
         min-height: 0;
@@ -1307,6 +1458,10 @@
         background: #172532;
       }
 
+      .leaflet-fade-anim .leaflet-tile {
+        transition-duration: 0.12s;
+      }
+
       .map-frame {
         position: relative;
         flex: 1;
@@ -1403,6 +1558,14 @@
         .hero {
           flex-direction: row;
         }
+
+        .post-match-summary {
+          grid-template-columns: 1fr;
+        }
+
+        .post-match-actions {
+          flex-direction: column;
+        }
       }
     </style>
   </head>
@@ -1423,7 +1586,8 @@
 
     <div class="layout">
       <section class="game-view" id="gameView">
-        <iframe id="streetView" title="Street View location" allowfullscreen></iframe>
+        <iframe id="streetView" title="Street View location" loading="eager" fetchpriority="high"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         <div class="streetview-link-blocker" aria-hidden="true"></div>
         <div id="blindfoldOverlay" class="blindfold-overlay hidden" role="status">
           <strong>ULTRA DROP · BLINDFOLD</strong>
@@ -1437,10 +1601,7 @@
         </div>
         <div class="scene-bottom">
           <div class="scene-title" id="sceneTitle">Look around. Find your clues. Drop your guess.</div>
-          <div class="scene-controls">
-            <button class="ghost" onclick="turnScene(-90)" aria-label="Look left">↶</button>
-            <button class="ghost" onclick="turnScene(90)" aria-label="Look right">↷</button>
-          </div>
+          <span class="scene-tip">DRAG TO LOOK · FOLLOW THE STREET ARROWS</span>
         </div>
       </section>
 
@@ -1542,6 +1703,33 @@
           <div class="case-reel-pointer" aria-hidden="true"></div>
         </div>
         <p id="caseOpeningStatus" class="case-opening-status">SCANNING REWARD TIERS</p>
+      </section>
+    </div>
+
+    <div id="postMatchOverlay" class="post-match-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="postMatchTitle">
+      <section class="post-match-panel">
+        <p class="eyebrow">WORLD TOUR · MATCH COMPLETE</p>
+        <h2 id="postMatchTitle">Final results</h2>
+        <div class="post-match-summary">
+          <div class="post-match-stat"><span>Your score</span><strong id="postMatchScore">0</strong></div>
+          <div class="post-match-stat"><span>Rounds played</span><strong id="postMatchRounds">0</strong></div>
+          <div class="post-match-stat"><span>Best streak</span><strong id="postMatchStreak">0</strong></div>
+        </div>
+        <h3>Final standings</h3>
+        <ol id="postMatchStandings" class="post-match-standings"></ol>
+        <h3>Your round results</h3>
+        <div class="post-match-table-wrap">
+          <table class="post-match-table">
+            <thead>
+              <tr><th>Round</th><th>Location</th><th>Points</th><th>Distance</th><th>Scoring</th></tr>
+            </thead>
+            <tbody id="postMatchRoundRows"></tbody>
+          </table>
+        </div>
+        <div class="post-match-actions">
+          <button id="postMatchPlayAgain" class="success" onclick="playAgain()">Play again</button>
+          <button class="ghost" onclick="closePostMatch()">Close</button>
+        </div>
       </section>
     </div>
 
@@ -1656,6 +1844,7 @@
       let roundExpired = false;
       let roundFinalized = false;
       let gameOrder = [];
+      let gameHistory = [];
       let score = 0;
       let completed = 0;
       let bestStreak = 0;
@@ -1664,6 +1853,7 @@
       let locked = false;
       let caseAvailable = 1;
       let caseUsed = false;
+      let caseOpening = false;
       let gameStarted = false;
       let guessMarker = null;
       let answerMarker = null;
@@ -1712,6 +1902,9 @@
         baseTileLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
           attribution: "Tiles &copy; Esri &mdash; Sources: Esri, OpenStreetMap contributors, and the GIS User Community",
           maxZoom: 19,
+          keepBuffer: 3,
+          updateWhenIdle: false,
+          updateWhenZooming: false,
         });
         baseTileLayer.on("tileload", () => $("mapNotice").classList.add("hidden"));
         baseTileLayer.on("tileerror", () => {
@@ -1728,11 +1921,11 @@
         }, 12000);
 
         map.on("click", (event) => {
-          if (locked) return;
+          if (locked || roundExpired) return;
           guess = { lat: event.latlng.lat, lon: event.latlng.lng };
           if (guessMarker) map.removeLayer(guessMarker);
           guessMarker = L.marker([guess.lat, guess.lon]).addTo(map);
-          $("submitButton").disabled = false;
+          $("submitButton").disabled = caseOpening;
           $("mapStatus").textContent = "Pin placed";
         });
         return true;
@@ -1742,6 +1935,9 @@
         fallbackTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 19,
+          keepBuffer: 3,
+          updateWhenIdle: false,
+          updateWhenZooming: false,
         });
         fallbackTileLayer.on("tileload", () => $("mapNotice").classList.add("hidden"));
         fallbackTileLayer.on("tileerror", () => {
@@ -1770,7 +1966,8 @@
         const url = "https://maps.google.com/maps?layer=c&cbll=" +
           encodeURIComponent(place.lat + "," + place.lon) +
           "&cbp=12," + bearing + ",,0,5&output=svembed";
-        $("streetView").src = url;
+        const frame = $("streetView");
+        if (frame.src !== url) frame.src = url;
       }
 
       function startRoundClock(deadline) {
@@ -1878,6 +2075,10 @@
           notify("No case is available this round.");
           return;
         }
+        if (roomCode && roundDeadline - Date.now() < 10000) {
+          notify("There is not enough time left in this round to open a case.");
+          return;
+        }
         const place = activePlace();
         const roll = Math.random() * 100;
         const reward = rewards.find((item) => roll < item.threshold);
@@ -1908,7 +2109,9 @@
         const reel = $("caseReel");
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const winnerIndex = 23;
-        const rollDuration = reducedMotion ? 1800 : 4600;
+        const rollDuration = reducedMotion ? 1800 : 6200;
+        const anticipationDuration = reducedMotion ? 0 : 800;
+        const finalSlowdownDuration = reducedMotion ? 0 : 1100;
 
         clearCaseReveal();
         reel.replaceChildren();
@@ -1935,13 +2138,40 @@
 
         overlay.classList.remove("revealed");
         overlay.classList.remove("hidden");
+        caseOpening = true;
+        $("submitButton").disabled = true;
         $("caseOpeningTitle").textContent = "Unlocking your case";
         $("caseOpeningStatus").textContent = reducedMotion ? "REWARD REVEALING…" : "SCANNING REWARD TIERS";
         reel.style.transition = "none";
         reel.style.transform = "translateX(0)";
         void reel.offsetWidth;
+
+        const revealReward = () => {
+          overlay.classList.add("revealed");
+          $("caseOpeningTitle").textContent = reward.name.toUpperCase() + " DROP";
+          $("caseOpeningStatus").textContent = reward.chance + "% DROP · REWARD SECURED";
+          caseRevealTimeout = setTimeout(() => {
+            overlay.classList.add("hidden");
+            overlay.classList.remove("active", "revealed");
+            caseOpening = false;
+            onComplete();
+            if (guess && !locked && !roundExpired) $("submitButton").disabled = false;
+          }, reducedMotion ? 1200 : 1100);
+        };
+
         requestAnimationFrame(() => {
           overlay.classList.add("active");
+          requestAnimationFrame(() => {
+            if (anticipationDuration) {
+              $("caseOpeningStatus").textContent = "CASE SEALED · SCANNING REWARD TIERS";
+              caseRevealTimeout = setTimeout(startRoll, anticipationDuration);
+            } else {
+              startRoll();
+            }
+          });
+        });
+
+        function startRoll() {
           requestAnimationFrame(() => {
             const winner = reel.children[winnerIndex];
             const reelWindow = reel.parentElement;
@@ -1951,21 +2181,20 @@
               (winnerBounds.left + winnerBounds.width / 2);
             reel.style.transition = reducedMotion
               ? "none"
-              : "transform " + rollDuration + "ms cubic-bezier(.08,.72,.08,1)";
+              : "transform " + rollDuration + "ms cubic-bezier(.12,.8,.12,1)";
             reel.style.transform = "translateX(" + offset + "px)";
-          });
-        });
 
-        caseRevealTimeout = setTimeout(() => {
-          overlay.classList.add("revealed");
-          $("caseOpeningTitle").textContent = reward.name.toUpperCase() + " DROP";
-          $("caseOpeningStatus").textContent = reward.chance + "% DROP · REWARD SECURED";
-          caseRevealTimeout = setTimeout(() => {
-            overlay.classList.add("hidden");
-            overlay.classList.remove("active", "revealed");
-            onComplete();
-          }, reducedMotion ? 1200 : 1100);
-        }, rollDuration);
+            if (!reducedMotion) {
+              $("caseOpeningStatus").textContent = "ROLLING · REWARD TIERS IN MOTION";
+              caseRevealTimeout = setTimeout(() => {
+                $("caseOpeningStatus").textContent = "SLOWING DOWN · LOCKING REWARD";
+                caseRevealTimeout = setTimeout(revealReward, rollDuration - finalSlowdownDuration);
+              }, finalSlowdownDuration);
+            } else {
+              caseRevealTimeout = setTimeout(revealReward, rollDuration);
+            }
+          });
+        }
       }
 
       function clearCaseReveal() {
@@ -1975,6 +2204,7 @@
         if (!overlay) return;
         overlay.classList.add("hidden");
         overlay.classList.remove("active", "revealed");
+        caseOpening = false;
       }
 
       function applyCaseReward(reward, hint) {
@@ -2131,7 +2361,7 @@
       }
 
       function submitGuess() {
-        if (!guess || locked || roundExpired) return;
+        if (!guess || locked || roundExpired || caseOpening) return;
         locked = true;
         $("submitButton").disabled = true;
         $("mapStatus").textContent = "Guess locked in";
@@ -2264,11 +2494,22 @@
         roundTimerInterval = null;
         $("roundTimer").classList.add("hidden");
         const place = activePlace();
-        const ownResult = results.find((result) => result.id === myId) || results[0];
+        const ownResult = results.find((result) => result.id === myId);
         if (ownResult) {
           score = ownResult.total === undefined ? score + ownResult.points : ownResult.total;
           currentStreak = ownResult.streak || 0;
           bestStreak = ownResult.bestStreak || Math.max(bestStreak, currentStreak);
+          gameHistory.push({
+            round: roundIndex + 1,
+            location: place.name + ", " + place.country,
+            points: ownResult.points,
+            distance: ownResult.distance,
+            accuracyPoints: ownResult.accuracyPoints,
+            speedBonus: ownResult.speedBonus,
+            precisionBonus: ownResult.precisionBonus,
+            streakBonus: ownResult.streakBonus,
+            guessed: Boolean(ownResult.guess),
+          });
         }
         const correct = [place.lat, place.lon];
         if (guessMarker) map.removeLayer(guessMarker);
@@ -2338,11 +2579,81 @@
         $("nextButton").classList.add("hidden");
         $("submitButton").disabled = true;
         $("openCaseButton").disabled = true;
+        showPostMatch(standings);
         if (roomCode && isHost) {
           $("hostSettings").classList.remove("hidden");
           $("startGameButton").disabled = false;
           $("startGameButton").textContent = "Play again";
         }
+      }
+
+      function showPostMatch(standings) {
+        const overlay = $("postMatchOverlay");
+        const finalStandings = Array.isArray(standings) && standings.length
+          ? standings.slice().sort((a, b) => b.score - a.score)
+          : [{ name: playerName(), score, bestStreak }];
+        $("postMatchScore").textContent = score.toLocaleString();
+        $("postMatchRounds").textContent = gameHistory.length + " / " + roundsPerGame;
+        $("postMatchStreak").textContent = bestStreak.toLocaleString();
+
+        const standingsList = $("postMatchStandings");
+        standingsList.replaceChildren();
+        finalStandings.forEach((player, index) => {
+          const row = document.createElement("li");
+          const name = document.createElement("span");
+          name.textContent = (index + 1) + ". " + player.name + (player.id === myId ? " · You" : "");
+          const total = document.createElement("strong");
+          total.textContent = (Number(player.score) || 0).toLocaleString() + " pts";
+          row.append(name, total);
+          standingsList.append(row);
+        });
+
+        const roundRows = $("postMatchRoundRows");
+        roundRows.replaceChildren();
+        gameHistory.forEach((result) => {
+          const row = document.createElement("tr");
+          const values = [
+            result.round,
+            result.location,
+            (Number(result.points) || 0).toLocaleString(),
+            result.guessed && Number.isFinite(result.distance)
+              ? Math.round(result.distance).toLocaleString() + " km"
+              : "No guess",
+            "A " + (Number(result.accuracyPoints) || 0).toLocaleString() +
+              " · S " + (Number(result.speedBonus) || 0).toLocaleString() +
+              " · P " + (Number(result.precisionBonus) || 0).toLocaleString() +
+              " · St " + (Number(result.streakBonus) || 0).toLocaleString(),
+          ];
+          values.forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.append(cell);
+          });
+          roundRows.append(row);
+        });
+
+        $("postMatchPlayAgain").classList.toggle("hidden", Boolean(roomCode && !isHost));
+        overlay.classList.remove("hidden");
+        $("postMatchPlayAgain").focus();
+      }
+
+      function closePostMatch() {
+        $("postMatchOverlay").classList.add("hidden");
+      }
+
+      function playAgain() {
+        closePostMatch();
+        if (roomCode) {
+          if (isHost) startMultiplayerGame();
+          return;
+        }
+        gameOrder = shuffledLocations();
+        score = 0;
+        completed = 0;
+        currentStreak = 0;
+        bestStreak = 0;
+        gameHistory = [];
+        prepareRound(0, gameOrder[0], false);
       }
 
       function playerScoreboard() {
@@ -2669,6 +2980,7 @@
         roundIndex = 0;
         score = 0;
         completed = 0;
+        gameHistory = [];
         currentStreak = 0;
         bestStreak = 0;
         Object.values(players).forEach((player) => {
@@ -2681,10 +2993,6 @@
         broadcastData({ type: "game-settings", roundsPerGame, roundDurationSeconds });
         prepareRound(0, gameOrder[0], true);
         $("roomStatus").textContent = "Game started • room " + roomCode;
-      }
-
-      function turnScene(degrees) {
-        setStreetView(activePlace(), Math.floor(Math.random() * 360) + degrees);
       }
 
       gameOrder = shuffledLocations();
