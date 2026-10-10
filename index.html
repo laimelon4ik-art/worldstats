@@ -1914,7 +1914,7 @@
         const reel = $("caseReel");
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const winnerIndex = 23;
-        const rollDuration = reducedMotion ? 0 : 3100;
+        const rollDuration = reducedMotion ? 1800 : 4600;
 
         clearCaseReveal();
         reel.replaceChildren();
@@ -1942,7 +1942,7 @@
         overlay.classList.remove("revealed");
         overlay.classList.remove("hidden");
         $("caseOpeningTitle").textContent = "Unlocking your case";
-        $("caseOpeningStatus").textContent = "SCANNING REWARD TIERS";
+        $("caseOpeningStatus").textContent = reducedMotion ? "REWARD REVEALING…" : "SCANNING REWARD TIERS";
         reel.style.transition = "none";
         reel.style.transform = "translateX(0)";
         void reel.offsetWidth;
@@ -1966,7 +1966,7 @@
             overlay.classList.add("hidden");
             overlay.classList.remove("active", "revealed");
             onComplete();
-          }, reducedMotion ? 250 : 850);
+          }, reducedMotion ? 1200 : 1100);
         }, rollDuration);
       }
 
