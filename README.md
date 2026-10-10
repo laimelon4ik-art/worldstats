@@ -1,6 +1,6 @@
-# CaseGuessr
+# WorldStats
 
-A GeoGuessr-inspired location game with CS2-style case rewards. Explore a Street View panorama, place a guess on the map, and earn points based on how close you are.
+A GeoGuessr-inspired location game with CS2-style case rewards. Explore a Street View panorama, place a guess on the map, and earn points based on accuracy, speed, precision, and streaks.
 
 ## Play
 
@@ -11,6 +11,8 @@ To publish it with GitHub Pages, open the repository's **Settings → Pages**, c
 ## Multiplayer
 
 Multiplayer game messages are relayed through a Cloudflare Durable Object over HTTPS WebSockets. Unlike a direct device-to-device WebRTC connection, this works across phone hotspots, carrier NAT, and different networks; both players only need internet access. The host still needs to keep the room tab open.
+
+The host chooses 5–25 rounds and a 30–120 second timer before starting. All players get the same Street View location and initial view direction. Each player can open their own case on every other round; rewards and hints are private. Round scoring awards up to 5,000 accuracy points, up to 1,000 speed points, precision bonuses, and streak bonuses.
 
 ### One-time relay setup
 

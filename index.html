@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CaseGuessr</title>
+    <title>WorldStats</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
       :root {
@@ -751,6 +751,17 @@
         background: #172530;
       }
 
+      .streetview-link-blocker {
+        position: absolute;
+        z-index: 3;
+        left: 0;
+        top: 0;
+        width: min(250px, 44%);
+        height: 96px;
+        background: linear-gradient(135deg, rgba(4, 10, 15, 0.94), rgba(4, 10, 15, 0.72) 78%, transparent);
+        pointer-events: auto;
+      }
+
       .scene-shade {
         position: absolute;
         inset: 0;
@@ -763,7 +774,7 @@
         position: absolute;
         left: 16px;
         right: 16px;
-        z-index: 2;
+        z-index: 4;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -991,6 +1002,36 @@
         line-height: 1.45;
       }
 
+      .host-settings {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 9px;
+      }
+
+      .host-settings label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .host-settings input,
+      .host-settings select {
+        width: 100%;
+        min-width: 0;
+        padding: 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 9px;
+        background: #081522;
+        color: var(--text);
+        font: inherit;
+        letter-spacing: normal;
+        text-transform: none;
+      }
+
       .room-code {
         color: var(--cyan);
         font-weight: 900;
@@ -1109,9 +1150,9 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">C</div>
+        <div class="brand-mark">W</div>
         <div>
-          <div class="brand-name">CASE<span>GUESSR</span></div>
+          <div class="brand-name">WORLD<span>STATS</span></div>
             <div class="brand-sub">Street view • Guess the world</div>
         </div>
       </div>
@@ -1124,9 +1165,11 @@
     <div class="layout">
       <section class="game-view">
         <iframe id="streetView" title="Street View location" allowfullscreen></iframe>
+        <div class="streetview-link-blocker" aria-hidden="true"></div>
         <div class="scene-shade"></div>
         <div class="scene-top">
-          <div class="scene-chip" id="sceneRound">ROUND 1 / 8</div>
+          <div class="scene-chip" id="sceneRound">ROUND 1 / 10</div>
+          <div class="scene-chip hidden" id="roundTimer" aria-live="polite">01:30</div>
           <div class="scene-chip" id="multiplayerBadge">SOLO GAME</div>
         </div>
         <div class="scene-bottom">
@@ -1148,8 +1191,25 @@
             <button class="ghost" id="joinRoomButton" onclick="joinRoom()">Join room</button>
           </div>
           <div id="roomStatus" class="room-status">Play solo, or create a room and share its code.</div>
-          <div class="room-help">Use the same HTTPS game link. Host: create a room and share its code. Friends: enter the code and join. The relay carries game messages, so mobile hotspots and different networks are supported.</div>
+          <div class="room-help">Host chooses 5–25 rounds and a 30 sec–2 min timer. Everyone sees the same place and gets a private case every other round. The relay works across networks.</div>
           <div id="roomPlayers" class="room-players"></div>
+          <div id="hostSettings" class="host-settings hidden">
+            <label for="matchCount">Matches / rounds · <output id="matchCountValue">10</output>
+              <input id="matchCount" type="range" min="5" max="25" step="1" value="10"
+                oninput="$('matchCountValue').value = this.value" />
+            </label>
+            <label for="roundDuration">Round timer
+              <select id="roundDuration">
+                <option value="30">30 seconds</option>
+                <option value="45">45 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="75">1 min 15 sec</option>
+                <option value="90" selected>1 min 30 sec</option>
+                <option value="105">1 min 45 sec</option>
+                <option value="120">2 minutes</option>
+              </select>
+            </label>
+          </div>
           <button id="copyRoomButton" class="ghost hidden" onclick="copyRoomCode()">Copy room code</button>
           <button id="startGameButton" class="success hidden" onclick="startMultiplayerGame()" style="width:100%;margin-top:9px">Start game</button>
         </section>
@@ -1168,7 +1228,7 @@
             <div class="case-copy">
               <span id="caseTierLabel" class="case-kicker">SEALED DROP · SERIES 01</span>
               <strong id="caseName" class="case-name">WORLD TOUR SUPPLY CASE</strong>
-              <span class="case-edition">CASEGUESSR · GLOBAL COLLECTION</span>
+              <span class="case-edition">WORLDSTATS · GLOBAL COLLECTION</span>
             </div>
           </div>
           <button id="openCaseButton" class="case-button" onclick="openCase()">Unlock supply drop</button>
@@ -1195,7 +1255,7 @@
           <div id="roundMessage" class="round-message hidden"></div>
           <button id="nextButton" class="success next-button hidden" onclick="nextRound()">Next round →</button>
           <div class="stats-block">
-            <div class="mini-stat"><span>Round</span><strong id="roundNumber">1/8</strong></div>
+            <div class="mini-stat"><span>Round</span><strong id="roundNumber">1/10</strong></div>
             <div class="mini-stat"><span>Score</span><strong id="score">0</strong></div>
             <div class="mini-stat"><span>Players</span><strong id="completedRounds">1</strong></div>
             <div class="mini-stat"><span>Best streak</span><strong id="streakValue">0</strong></div>
@@ -1258,7 +1318,8 @@
         { name: "Le Marais, Paris", city: "Paris", country: "France", continent: "Europe", lat: 48.8610, lon: 2.3620 },
         { name: "Shinjuku, Tokyo", city: "Tokyo", country: "Japan", continent: "Asia", lat: 35.6938, lon: 139.7034 },
       ];
-      const roundsPerGame = 8;
+      let roundsPerGame = 10;
+      let roundDurationSeconds = 90;
 
       const rewards = [
         { name: "Legendary", css: "legendary", type: "coordinates", emoji: "💎", chance: 2 },
@@ -1269,6 +1330,11 @@
 
       let roundIndex = 0;
       let locationIndex = 0;
+      let roundHeading = 0;
+      let roundDeadline = 0;
+      let roundTimerInterval = null;
+      let roundExpired = false;
+      let roundFinalized = false;
       let gameOrder = [];
       let score = 0;
       let completed = 0;
@@ -1387,6 +1453,35 @@
         $("streetView").src = url;
       }
 
+      function startRoundClock(deadline) {
+        clearInterval(roundTimerInterval);
+        roundDeadline = deadline;
+        $("roundTimer").classList.remove("hidden");
+        const tick = () => {
+          const remainingMs = Math.max(0, roundDeadline - Date.now());
+          const remainingSeconds = Math.ceil(remainingMs / 1000);
+          const minutes = Math.floor(remainingSeconds / 60).toString().padStart(2, "0");
+          const seconds = (remainingSeconds % 60).toString().padStart(2, "0");
+          $("roundTimer").textContent = "TIME " + minutes + ":" + seconds;
+          if (remainingMs > 0 || roundExpired) return;
+          clearInterval(roundTimerInterval);
+          roundTimerInterval = null;
+          roundExpired = true;
+          $("submitButton").disabled = true;
+          $("openCaseButton").disabled = true;
+          if (isHost) {
+            finishMultiplayerRound(true);
+            return;
+          }
+          if (!locked) {
+            $("roundMessage").textContent = "Time is up. Waiting for the round results…";
+            $("roundMessage").classList.remove("hidden");
+          }
+        };
+        tick();
+        roundTimerInterval = setInterval(tick, 250);
+      }
+
       function clearRoundMarkers() {
         if (guessMarker) map.removeLayer(guessMarker);
         if (answerMarker) map.removeLayer(answerMarker);
@@ -1395,14 +1490,22 @@
         guessMarker = answerMarker = answerLine = null;
       }
 
-      function prepareRound(index, placeIndex, broadcast) {
+      function prepareRound(index, placeIndex, broadcast, heading, deadline) {
         if (index >= roundsPerGame) {
           finishGame();
+          return;
+        }
+        if (!Number.isInteger(placeIndex) || !locations[placeIndex]) {
+          notify("The host sent an invalid round location. Please rejoin the room.");
           return;
         }
 
         roundIndex = index;
         locationIndex = placeIndex;
+        roundHeading = Number.isFinite(heading) ? heading : Math.floor(Math.random() * 360);
+        roundDeadline = 0;
+        roundExpired = false;
+        roundFinalized = false;
         guess = null;
         locked = false;
         submissions = {};
@@ -1422,30 +1525,37 @@
         $("caseTierLabel").textContent = caseAvailable ? "SEALED DROP · SERIES 01" : "DROP UNAVAILABLE";
         $("caseName").textContent = "WORLD TOUR SUPPLY CASE";
         $("caseEmoji").textContent = caseAvailable ? "✦" : "—";
-        $("openCaseButton").disabled = !caseAvailable || (!isHost && !!roomCode);
+        $("openCaseButton").disabled = !caseAvailable;
         $("caseResult").classList.add("hidden");
         $("caseRarity").className = "common";
         $("caseReward").textContent = "No reward yet.";
         $("sceneRound").textContent = "ROUND " + (roundIndex + 1) + " / " + roundsPerGame;
         $("multiplayerBadge").textContent = roomCode ? "ROOM " + roomCode : "SOLO GAME";
 
-        setStreetView(activePlace());
+        setStreetView(activePlace(), roundHeading);
         map.setView([20, 0], 2);
         updateHud();
         setTimeout(() => map.invalidateSize(), 80);
-        if (broadcast && isHost) broadcastData({ type: "round", roundIndex, locationIndex });
+        if (roomCode) {
+          const sharedDeadline = Number.isFinite(deadline)
+            ? deadline
+            : Date.now() + roundDurationSeconds * 1000;
+          startRoundClock(sharedDeadline);
+        } else {
+          clearInterval(roundTimerInterval);
+          roundTimerInterval = null;
+          $("roundTimer").classList.add("hidden");
+        }
+        if (broadcast && isHost) {
+          broadcastData({ type: "round", roundIndex, locationIndex, heading: roundHeading, deadline: roundDeadline });
+        }
       }
 
       function openCase() {
-        if (locked || !caseAvailable || caseUsed) {
+        if (locked || roundExpired || !caseAvailable || caseUsed) {
           notify("No case is available this round.");
           return;
         }
-        if (roomCode && !isHost) {
-          notify("Only the host can open the shared case.");
-          return;
-        }
-
         const place = activePlace();
         const roll = Math.random() * 100;
         const reward = roll < 2 ? rewards[0] : roll < 15 ? rewards[1] : roll < 50 ? rewards[2] : rewards[3];
@@ -1456,9 +1566,6 @@
           continent: "Continent: " + place.continent,
         };
         applyCaseReward(reward.name, reward.css, reward.emoji, hints[reward.type], reward.chance);
-        if (roomCode && isHost) {
-          broadcastData({ type: "hint", name: reward.name, css: reward.css, emoji: reward.emoji, hint: hints[reward.type], chance: reward.chance });
-        }
       }
 
       function applyCaseReward(name, css, emoji, hint, chance) {
@@ -1496,19 +1603,32 @@
         const radians = (number) => (number * Math.PI) / 180;
         const latDelta = radians(b.lat - a.lat);
         const lonDelta = radians(b.lon - a.lon);
-        const value = Math.sin(latDelta / 2) ** 2 +
-          Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(lonDelta / 2) ** 2;
+        const value = Math.min(1, Math.max(0, Math.sin(latDelta / 2) ** 2 +
+          Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(lonDelta / 2) ** 2));
         return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
       }
 
-      function calculatePoints(playerGuess) {
+      function calculatePoints(playerGuess, secondsRemaining, previousStreak) {
         const place = activePlace();
         const distance = distanceKm(playerGuess, { lat: place.lat, lon: place.lon });
-        return { distance, points: Math.round(5000 * Math.exp(-distance / 2000)) };
+        const accuracyPoints = Math.round(5000 * Math.exp(-distance / 1800));
+        const speedBonus = Math.round(1000 * Math.max(0, Math.min(1, secondsRemaining / roundDurationSeconds)));
+        const streak = distance <= 50 ? previousStreak + 1 : 0;
+        const streakBonus = Math.min(500, Math.max(0, streak - 1) * 100);
+        const precisionBonus = distance <= 5 ? 500 : distance <= 25 ? 250 : 0;
+        return {
+          distance,
+          accuracyPoints,
+          speedBonus,
+          streakBonus,
+          precisionBonus,
+          streak,
+          points: accuracyPoints + speedBonus + streakBonus + precisionBonus,
+        };
       }
 
       function submitGuess() {
-        if (!guess || locked) return;
+        if (!guess || locked || roundExpired) return;
         locked = true;
         $("submitButton").disabled = true;
         $("mapStatus").textContent = "Guess locked in";
@@ -1531,14 +1651,14 @@
         }
 
         if (roomCode && isHost) {
-          submissions[myId] = guess;
+          submissions[myId] = { guess, receivedAt: Date.now() };
           tryFinishMultiplayerRound();
           return;
         }
-        const result = calculatePoints(guess);
+        const result = calculatePoints(guess, roundDurationSeconds, currentStreak);
         score += result.points;
         completed++;
-        currentStreak++;
+        currentStreak = result.streak;
         bestStreak = Math.max(bestStreak, currentStreak);
         showRoundResult([{
           id: myId,
@@ -1546,22 +1666,33 @@
           guess,
           points: result.points,
           distance: result.distance,
+          accuracyPoints: result.accuracyPoints,
+          speedBonus: result.speedBonus,
+          streakBonus: result.streakBonus,
+          precisionBonus: result.precisionBonus,
+          streak: result.streak,
+          bestStreak,
           total: score,
         }]);
       }
 
       function addSubmission(id, playerGuess) {
-        if (!isHost || locked && id === myId || submissions[id]) return;
+        if (!isHost || locked && id === myId || submissions[id] || roundExpired) return;
         if (!playerGuess || typeof playerGuess !== "object") return;
         if (!Number.isFinite(playerGuess.lat) || !Number.isFinite(playerGuess.lon) ||
             playerGuess.lat < -90 || playerGuess.lat > 90 ||
             playerGuess.lon < -180 || playerGuess.lon > 180) return;
-        submissions[id] = playerGuess;
+        if (Date.now() >= roundDeadline) {
+          finishMultiplayerRound(true);
+          return;
+        }
+        submissions[id] = { guess: playerGuess, receivedAt: Date.now() };
         renderPlayers();
         tryFinishMultiplayerRound();
       }
 
       function tryFinishMultiplayerRound() {
+        if (roundFinalized || roundExpired) return;
         const activeIds = Object.keys(players).filter((id) => players[id].connected);
         if (!activeIds.length || !activeIds.every((id) => submissions[id])) {
           if (roomCode && isHost && submissions[myId]) {
@@ -1571,13 +1702,52 @@
           return;
         }
 
+        finishMultiplayerRound(false);
+      }
+
+      function finishMultiplayerRound(timedOut) {
+        if (!isHost || roundFinalized) return;
+        const activeIds = Object.keys(players).filter((id) => players[id].connected);
+        if (!timedOut && (!activeIds.length || !activeIds.every((id) => submissions[id]))) return;
+        roundFinalized = true;
+        locked = true;
+        clearInterval(roundTimerInterval);
+        roundTimerInterval = null;
+        $("roundTimer").classList.add("hidden");
+
         const results = activeIds.map((id) => {
-          const result = calculatePoints(submissions[id]);
+          const submission = submissions[id];
+          if (!submission) {
+            players[id].streak = 0;
+            return {
+              id,
+              name: players[id].name,
+              guess: null,
+              points: 0,
+              distance: null,
+              accuracyPoints: 0,
+              speedBonus: 0,
+              streakBonus: 0,
+              precisionBonus: 0,
+              streak: 0,
+              bestStreak: players[id].bestStreak || 0,
+              total: players[id].score,
+            };
+          }
+          const secondsRemaining = Math.max(0, (roundDeadline - submission.receivedAt) / 1000);
+          const result = calculatePoints(submission.guess, secondsRemaining, players[id].streak || 0);
           players[id].score += result.points;
-          return { id, name: players[id].name, guess: submissions[id], points: result.points, distance: result.distance, total: players[id].score };
+          players[id].streak = result.streak;
+          players[id].bestStreak = Math.max(players[id].bestStreak || 0, result.streak);
+          return {
+            id,
+            name: players[id].name,
+            guess: submission.guess,
+            ...result,
+            bestStreak: players[id].bestStreak,
+            total: players[id].score,
+          };
         });
-        currentStreak++;
-        bestStreak = Math.max(bestStreak, currentStreak);
         completed++;
         showRoundResult(results);
         broadcastData({ type: "result", roundIndex, locationIndex, results });
@@ -1586,17 +1756,25 @@
 
       function showRoundResult(results) {
         locked = true;
+        clearInterval(roundTimerInterval);
+        roundTimerInterval = null;
+        $("roundTimer").classList.add("hidden");
         const place = activePlace();
         const ownResult = results.find((result) => result.id === myId) || results[0];
-        if (ownResult) score = ownResult.total === undefined ? score + ownResult.points : ownResult.total;
+        if (ownResult) {
+          score = ownResult.total === undefined ? score + ownResult.points : ownResult.total;
+          currentStreak = ownResult.streak || 0;
+          bestStreak = ownResult.bestStreak || Math.max(bestStreak, currentStreak);
+        }
         const correct = [place.lat, place.lon];
         if (guessMarker) map.removeLayer(guessMarker);
         guessMarker = null;
         answerMarker = L.marker(correct).addTo(resultLayer).bindPopup("Correct location: " + place.name).openPopup();
 
-        results.forEach((result) => {
+        const guessedResults = results.filter((result) => result.guess);
+        guessedResults.forEach((result) => {
           const color = result.id === myId ? "#4a7cff" : "#e56bdc";
-          const marker = L.circleMarker([result.guess.lat, result.guess.lon], {
+          L.circleMarker([result.guess.lat, result.guess.lon], {
             radius: 7, color, fillColor: color, fillOpacity: 0.95, weight: 2,
           }).addTo(resultLayer).bindTooltip(document.createTextNode(result.name));
           L.polyline([[result.guess.lat, result.guess.lon], correct], {
@@ -1604,11 +1782,20 @@
           }).addTo(resultLayer);
         });
 
-        const bounds = L.latLngBounds([correct, ...results.map((result) => [result.guess.lat, result.guess.lon])]);
+        const bounds = L.latLngBounds([correct, ...guessedResults.map((result) => [result.guess.lat, result.guess.lon])]);
         map.fitBounds(bounds.pad(0.25), { maxZoom: 7 });
         $("roundMessage").textContent = place.name + ", " + place.country + "\n" +
-          results.map((result) => result.name + ": " + result.points.toLocaleString() +
-            " pts (" + Math.round(result.distance).toLocaleString() + " km)").join("\n");
+          results
+            .slice()
+            .sort((a, b) => b.total - a.total)
+            .map((result) => result.name + ": " + result.points.toLocaleString() +
+              " pts" + (result.guess
+                ? " (" + Math.round(result.distance).toLocaleString() + " km · accuracy " +
+                  result.accuracyPoints.toLocaleString() + " + speed " + result.speedBonus.toLocaleString() +
+                  " + precision " + result.precisionBonus.toLocaleString() + " + streak " +
+                  result.streakBonus.toLocaleString() + ")"
+                : " (no guess)"))
+            .join("\n");
         $("roundMessage").classList.remove("hidden");
         $("mapStatus").textContent = "Answer revealed";
         $("sceneTitle").textContent = place.name + ", " + place.country;
@@ -1622,8 +1809,9 @@
       function nextRound() {
         if (!locked || (roomCode && !isHost)) return;
         if (roundIndex + 1 >= roundsPerGame) {
-          if (roomCode && isHost) broadcastData({ type: "finished", scores: playerScoreboard() });
-          finishGame();
+          const standings = playerScoreboard().sort((a, b) => b.score - a.score);
+          if (roomCode && isHost) broadcastData({ type: "finished", scores: standings });
+          finishGame(standings);
           return;
         }
         const nextIndex = roundIndex + 1;
@@ -1631,17 +1819,35 @@
         prepareRound(nextIndex, nextLocation, true);
       }
 
-      function finishGame() {
+      function finishGame(standings) {
+        clearInterval(roundTimerInterval);
+        roundTimerInterval = null;
+        gameStarted = false;
+        $("roundTimer").classList.add("hidden");
         $("sceneTitle").textContent = "All locations explored.";
-        $("roundMessage").innerHTML = "<strong>Final score: " + score.toLocaleString() + "</strong><br>Thanks for playing!";
+        $("roundMessage").textContent = standings && standings.length > 1
+          ? "FINAL STANDINGS\n" + standings.map((player, index) =>
+            (index + 1) + ". " + player.name + " — " + player.score.toLocaleString() + " pts").join("\n")
+          : "Final score: " + score.toLocaleString() + "\nThanks for playing!";
         $("roundMessage").classList.remove("hidden");
         $("nextButton").classList.add("hidden");
         $("submitButton").disabled = true;
         $("openCaseButton").disabled = true;
+        if (roomCode && isHost) {
+          $("hostSettings").classList.remove("hidden");
+          $("startGameButton").disabled = false;
+          $("startGameButton").textContent = "Play again";
+        }
       }
 
       function playerScoreboard() {
-        return Object.keys(players).map((id) => ({ id, name: players[id].name, score: players[id].score }));
+        return Object.keys(players).map((id) => ({
+          id,
+          name: players[id].name,
+          score: players[id].score,
+          streak: players[id].streak || 0,
+          bestStreak: players[id].bestStreak || 0,
+        }));
       }
 
       function copyRoomCode() {
@@ -1795,12 +2001,13 @@
             $("joinRoomButton").disabled = false;
           }
         } else if (role === "host" && packet.type === "ready") {
-          players[myId] = { name: playerName(), score: 0, connected: true };
+          players[myId] = { name: playerName(), score: 0, streak: 0, bestStreak: 0, connected: true };
           $("roomStatus").innerHTML = "Room is live. Share code <span class=\"room-code\">" + roomCode + "</span> with friends.";
           $("copyRoomButton").classList.remove("hidden");
           $("startGameButton").classList.remove("hidden");
           $("startGameButton").disabled = true;
           $("startGameButton").textContent = "Waiting for friends…";
+          $("hostSettings").classList.remove("hidden");
           $("multiplayerBadge").textContent = "ROOM " + roomCode;
           renderPlayers();
         } else if (role === "guest" && packet.type === "welcome") {
@@ -1809,7 +2016,7 @@
           $("multiplayerBadge").textContent = "ROOM " + roomCode;
           sendRoomMessage({ type: "join", name: playerName() });
         } else if (role === "host" && packet.type === "player-joined") {
-          players[packet.playerId] = { name: "Joining…", score: 0, connected: true };
+          players[packet.playerId] = { name: "Joining…", score: 0, streak: 0, bestStreak: 0, connected: true };
           renderPlayers();
         } else if (role === "host" && packet.type === "player-left") {
           if (players[packet.playerId]) players[packet.playerId].connected = false;
@@ -1843,11 +2050,14 @@
       function handlePlayerMessage(playerId, message) {
         if (!message || typeof message !== "object") return;
         if (message.type === "join") {
-          if (!players[playerId]) players[playerId] = { name: "Player", score: 0, connected: true };
+          if (!players[playerId]) players[playerId] = { name: "Player", score: 0, streak: 0, bestStreak: 0, connected: true };
           players[playerId].name = String(message.name || "Player").slice(0, 18);
           players[playerId].connected = true;
           renderPlayers();
-          if (gameStarted) broadcastData({ type: "round", roundIndex, locationIndex });
+          if (gameStarted) {
+            broadcastData({ type: "game-settings", roundsPerGame, roundDurationSeconds });
+            broadcastData({ type: "round", roundIndex, locationIndex, heading: roundHeading, deadline: roundDeadline });
+          }
           broadcastLobby();
         } else if (message.type === "submit") {
           addSubmission(playerId, message.guess);
@@ -1872,7 +2082,7 @@
         });
         $("roomPlayers").textContent = entries.join("  |  ");
         $("completedRounds").textContent = Object.keys(players).filter((id) => players[id].connected).length;
-        if (isHost && !$("startGameButton").classList.contains("hidden")) {
+        if (isHost && !gameStarted && !$("startGameButton").classList.contains("hidden")) {
           const ready = Object.keys(players).filter((id) => players[id].connected).length > 1;
           $("startGameButton").disabled = !ready;
           $("startGameButton").textContent = ready ? "Start game" : "Waiting for friends…";
@@ -1884,32 +2094,59 @@
         if (message.type === "lobby") {
           players = {};
           message.players.forEach((player) => {
-            players[player.id] = { name: player.name, score: player.score || 0, connected: true };
+            players[player.id] = {
+              name: player.name,
+              score: player.score || 0,
+              streak: player.streak || 0,
+              bestStreak: player.bestStreak || 0,
+              connected: true,
+            };
           });
-          if (!players[myId]) players[myId] = { name: playerName(), score, connected: true };
+          if (!players[myId]) players[myId] = { name: playerName(), score, streak: currentStreak, bestStreak, connected: true };
           renderPlayers();
+        } else if (message.type === "game-settings") {
+          if (Number.isInteger(message.roundsPerGame) && message.roundsPerGame >= 5 && message.roundsPerGame <= 25 &&
+              Number.isInteger(message.roundDurationSeconds) && message.roundDurationSeconds >= 30 &&
+              message.roundDurationSeconds <= 120) {
+            roundsPerGame = message.roundsPerGame;
+            roundDurationSeconds = message.roundDurationSeconds;
+            updateHud();
+          }
         } else if (message.type === "round") {
           gameOrder = [];
-          prepareRound(message.roundIndex, message.locationIndex, false);
+          prepareRound(message.roundIndex, message.locationIndex, false, message.heading, message.deadline);
           $("roomStatus").textContent = "Playing with friends • room " + roomCode;
-        } else if (message.type === "hint") {
-          applyCaseReward(message.name, message.css, message.emoji, message.hint, message.chance);
         } else if (message.type === "result") {
           const own = message.results.find((result) => result.id === myId);
           message.results.forEach((result) => {
-            if (players[result.id]) players[result.id].score = result.total;
+            if (players[result.id]) {
+              players[result.id].score = result.total;
+              players[result.id].streak = result.streak || 0;
+              players[result.id].bestStreak = result.bestStreak || 0;
+            }
           });
-          if (own) score = own.total;
+          if (own) {
+            score = own.total;
+            currentStreak = own.streak || 0;
+            bestStreak = own.bestStreak || 0;
+          }
           completed++;
           showRoundResult(message.results);
           renderPlayers();
         } else if (message.type === "finished") {
-          finishGame();
+          finishGame(message.scores);
         }
       }
 
       function startMultiplayerGame() {
         if (!isHost) return;
+        roundsPerGame = Number($("matchCount").value);
+        roundDurationSeconds = Number($("roundDuration").value);
+        if (!Number.isInteger(roundsPerGame) || roundsPerGame < 5 || roundsPerGame > 25 ||
+            !Number.isInteger(roundDurationSeconds) || roundDurationSeconds < 30 || roundDurationSeconds > 120) {
+          notify("Choose 5–25 matches and a round timer from 30 seconds to 2 minutes.");
+          return;
+        }
         gameStarted = true;
         gameOrder = shuffledLocations();
         roundIndex = 0;
@@ -1917,7 +2154,14 @@
         completed = 0;
         currentStreak = 0;
         bestStreak = 0;
-        Object.values(players).forEach((player) => { player.score = 0; });
+        Object.values(players).forEach((player) => {
+          player.score = 0;
+          player.streak = 0;
+          player.bestStreak = 0;
+        });
+        $("hostSettings").classList.add("hidden");
+        $("startGameButton").disabled = true;
+        broadcastData({ type: "game-settings", roundsPerGame, roundDurationSeconds });
         prepareRound(0, gameOrder[0], true);
         $("roomStatus").textContent = "Game started • room " + roomCode;
       }
