@@ -33,8 +33,7 @@ export class Room {
       return jsonResponse({ error: "Invalid room role." }, 400);
     }
 
-    const sockets = this.state.getWebSockets();
-    const hostSocket = sockets.find((socket) => socket.getTags().includes("host"));
+    const hostSocket = this.state.getWebSockets("host")[0];
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     if (role === "guest" && !hostSocket) {
@@ -54,12 +53,13 @@ export class Room {
     }
 
     this.state.acceptWebSocket(server, [role]);
+    server.serializeAttachment({ role });
 
     if (role === "host") {
       server.send(JSON.stringify({ type: "ready" }));
     } else {
       const playerId = crypto.randomUUID();
-      server.serializeAttachment({ playerId });
+      server.serializeAttachment({ role, playerId });
       hostSocket.send(JSON.stringify({ type: "player-joined", playerId }));
       server.send(JSON.stringify({ type: "welcome", playerId }));
     }
@@ -68,7 +68,8 @@ export class Room {
   }
 
   webSocketMessage(socket, rawMessage) {
-    const role = socket.getTags().includes("host") ? "host" : "guest";
+    const attachment = socket.deserializeAttachment();
+    const role = attachment?.role;
     if (typeof rawMessage !== "string" || rawMessage.length > MAX_MESSAGE_LENGTH) {
       errorPacket(socket, "Room message is invalid or too large.");
       return;
@@ -89,8 +90,12 @@ export class Room {
       socket.send(JSON.stringify({ type: "pong" }));
       return;
     }
+    if (role !== "host" && role !== "guest") {
+      errorPacket(socket, "Room socket has an invalid role.");
+      return;
+    }
 
-    const hostSocket = this.state.getWebSockets().find((candidate) => candidate.getTags().includes("host"));
+    const hostSocket = this.state.getWebSockets("host")[0];
     if (role === "host" && packet.type === "broadcast" && packet.message && typeof packet.message === "object") {
       const serialized = JSON.stringify({ type: "message", message: packet.message });
       if (serialized.length > MAX_MESSAGE_LENGTH) {
@@ -106,7 +111,6 @@ export class Room {
         errorPacket(socket, "The host left the room.", 4002);
         return;
       }
-      const attachment = socket.deserializeAttachment();
       const serialized = JSON.stringify({
         type: "client-message",
         playerId: attachment?.playerId,
@@ -124,7 +128,8 @@ export class Room {
   }
 
   webSocketClose(socket) {
-    if (socket.getTags().includes("host")) {
+    const role = socket.deserializeAttachment()?.role;
+    if (role === "host") {
       this.state.getWebSockets("guest").forEach((guest) => {
         try {
           guest.close(4002, "The host left the room.");
@@ -134,6 +139,7 @@ export class Room {
       });
       return;
     }
+    if (role !== "guest") return;
 
     const hostSocket = this.state.getWebSockets("host")[0];
     if (!hostSocket) return;
