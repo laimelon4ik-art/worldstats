@@ -475,6 +475,188 @@
         text-align: center;
       }
 
+      .case-launch-stage {
+        position: relative;
+        height: 154px;
+        display: grid;
+        place-items: center;
+        margin: -12px 0 12px;
+        isolation: isolate;
+      }
+
+      .case-launch-rings,
+      .case-launch-rings::before,
+      .case-launch-rings::after {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: 138px;
+        height: 138px;
+        border: 1px solid rgba(114, 240, 255, 0.25);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 24px rgba(114, 240, 255, 0.13), inset 0 0 24px rgba(114, 240, 255, 0.08);
+        content: "";
+        pointer-events: none;
+      }
+
+      .case-launch-rings::before {
+        width: 176px;
+        height: 176px;
+        border-style: dashed;
+        opacity: 0.55;
+        animation: caseOrbit 10s linear infinite;
+      }
+
+      .case-launch-rings::after {
+        width: 216px;
+        height: 216px;
+        border-color: rgba(211, 155, 255, 0.14);
+        opacity: 0.45;
+        animation: caseOrbit 16s linear infinite reverse;
+      }
+
+      .case-launch-case {
+        position: relative;
+        z-index: 1;
+        width: 92px;
+        height: 104px;
+        display: grid;
+        place-items: center;
+        margin-top: 12px;
+        border: 2px solid rgba(242, 251, 255, 0.88);
+        border-radius: 12px;
+        background:
+          repeating-linear-gradient(135deg, transparent 0 11px, rgba(2, 9, 18, 0.34) 11px 16px),
+          linear-gradient(145deg, #60eaff, #254c91 54%, #101c38);
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 5px rgba(3, 10, 17, 0.4),
+          0 0 25px rgba(114, 240, 255, 0.26);
+        transform: perspective(440px) rotateY(-12deg) rotateX(5deg);
+        transform-origin: center 65%;
+      }
+
+      .case-launch-case::before {
+        position: absolute;
+        z-index: 2;
+        top: -12px;
+        left: -5px;
+        right: -3px;
+        height: 18px;
+        border: 1px solid rgba(248, 253, 255, 0.9);
+        border-radius: 5px 8px 2px 2px;
+        background: linear-gradient(110deg, #c5eaff, #597dba 48%, #ecf7ff);
+        clip-path: polygon(7% 0, 100% 0, 92% 100%, 0 100%);
+        content: "";
+        transform-origin: 12% 100%;
+        transition: transform 0.45s cubic-bezier(.2,.8,.2,1);
+      }
+
+      .case-launch-case::after {
+        position: absolute;
+        inset: -22px;
+        z-index: -1;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--case-reward-glow, rgba(114,240,255,.6)), transparent 67%);
+        content: "";
+        opacity: 0.3;
+        transform: scale(0.72);
+        transition: opacity 0.5s ease, transform 0.6s ease;
+      }
+
+      .case-launch-emblem {
+        width: 47px;
+        height: 47px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        background: rgba(4, 12, 26, 0.8);
+        color: white;
+        font-size: 28px;
+        font-weight: 900;
+        text-shadow: 0 0 16px var(--case-reward-glow, var(--cyan));
+        box-shadow: 0 0 24px var(--case-reward-glow, rgba(114,240,255,.6));
+      }
+
+      .case-launch-lock {
+        position: absolute;
+        z-index: 3;
+        right: -8px;
+        top: 39px;
+        width: 22px;
+        height: 27px;
+        display: grid;
+        place-items: center;
+        border: 1px solid white;
+        border-radius: 5px;
+        background: linear-gradient(145deg, #fff5c7, #d6a934);
+        color: #263143;
+        font-size: 13px;
+        font-weight: 950;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+      }
+
+      .case-opening-overlay.active .case-launch-case {
+        animation: caseCharge 1.1s ease-in-out infinite;
+      }
+
+      .case-opening-overlay.anticipating .case-opening-panel {
+        animation: panelCharge 0.65s ease-in-out infinite alternate;
+      }
+
+      .case-opening-overlay.rolling .case-launch-case {
+        animation: caseRattle 0.16s linear infinite;
+      }
+
+      .case-opening-overlay.rolling .case-launch-rings {
+        animation: ringPulse 0.7s ease-in-out infinite alternate;
+      }
+
+      .case-opening-overlay.revealed .case-launch-case {
+        animation: caseBurst 0.75s cubic-bezier(.16,.84,.25,1) both;
+      }
+
+      .case-opening-overlay.revealed .case-launch-case::before {
+        transform: translate(8px, -32px) rotate(24deg);
+      }
+
+      .case-opening-overlay.revealed .case-launch-case::after {
+        opacity: 1;
+        transform: scale(1.8);
+      }
+
+      .case-opening-overlay.revealed .case-launch-lock {
+        animation: lockPop 0.55s ease-out both;
+      }
+
+      @keyframes caseCharge {
+        0%, 100% { transform: perspective(440px) rotateY(-12deg) rotateX(5deg) scale(1); }
+        50% { transform: perspective(440px) rotateY(12deg) rotateX(-3deg) scale(1.08); }
+      }
+
+      @keyframes caseRattle {
+        0%, 100% { transform: perspective(440px) rotateY(-12deg) rotateX(5deg) translateX(0); }
+        25% { transform: perspective(440px) rotateY(-12deg) rotateX(5deg) translateX(-4px) rotate(-2deg); }
+        75% { transform: perspective(440px) rotateY(-12deg) rotateX(5deg) translateX(4px) rotate(2deg); }
+      }
+
+      @keyframes ringPulse {
+        to { filter: brightness(2); transform: scale(1.12); }
+      }
+
+      @keyframes panelCharge {
+        to { box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65), 0 0 75px rgba(114, 240, 255, 0.32); }
+      }
+
+      @keyframes caseBurst {
+        0% { transform: perspective(440px) rotateY(-12deg) rotateX(5deg) scale(1); }
+        45% { transform: perspective(440px) rotateY(8deg) rotateX(-4deg) translateY(-14px) scale(1.22); }
+        100% { transform: perspective(440px) rotateY(0) rotateX(0) translateY(0) scale(1.05); }
+      }
+
+      @keyframes lockPop {
+        to { transform: translate(18px, -22px) rotate(32deg) scale(0.65); opacity: 0; }
+      }
+
       .case-opening-eyebrow {
         margin: 0 0 9px;
         color: var(--cyan);
@@ -625,6 +807,171 @@
         overflow: auto;
         background: rgba(2, 6, 13, 0.88);
         backdrop-filter: blur(12px);
+      }
+
+      .round-score-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 6200;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        overflow: auto;
+        background: rgba(2, 6, 13, 0.34);
+        backdrop-filter: blur(0);
+        opacity: 0;
+        transition: opacity 0.35s ease, backdrop-filter 0.45s ease;
+      }
+
+      .round-score-overlay.active {
+        background: rgba(2, 6, 13, 0.55);
+        backdrop-filter: blur(12px);
+        opacity: 1;
+      }
+
+      .round-score-panel {
+        width: min(760px, 100%);
+        max-height: 100%;
+        overflow: auto;
+        padding: clamp(18px, 4vw, 32px);
+        border: 1px solid rgba(114, 240, 255, 0.32);
+        border-radius: 20px;
+        background:
+          radial-gradient(ellipse at 50% -15%, rgba(114, 240, 255, 0.17), transparent 52%),
+          linear-gradient(145deg, rgba(18, 36, 57, 0.98), rgba(5, 12, 22, 0.98));
+        box-shadow: 0 24px 90px rgba(0, 0, 0, 0.65), 0 0 40px rgba(74, 124, 255, 0.12);
+        transform: translateY(18px) scale(0.98);
+        transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+      }
+
+      .round-score-overlay.active .round-score-panel {
+        transform: translateY(0) scale(1);
+      }
+
+      .round-score-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 14px;
+      }
+
+      .round-score-heading h2 {
+        margin: 0;
+        font-size: clamp(1.45rem, 4vw, 2rem);
+      }
+
+      .round-score-location {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .round-score-award {
+        flex: 0 0 auto;
+        color: var(--cyan);
+        font-size: clamp(1.4rem, 5vw, 2.2rem);
+        font-weight: 950;
+        text-align: right;
+        text-shadow: 0 0 20px rgba(114, 240, 255, 0.35);
+      }
+
+      .round-score-award small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .round-score-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+        gap: 8px;
+        margin: 18px 0;
+      }
+
+      .round-score-stat {
+        padding: 11px;
+        border: 1px solid var(--stroke);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .round-score-stat span,
+      .round-score-stat strong {
+        display: block;
+      }
+
+      .round-score-stat span {
+        color: var(--muted);
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .round-score-stat strong {
+        margin-top: 6px;
+        font-size: 1.12rem;
+      }
+
+      .round-score-panel h3 {
+        margin: 18px 0 8px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .round-score-breakdown {
+        margin: 0;
+        color: #d5e6f3;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .round-score-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--stroke);
+        border-radius: 11px;
+      }
+
+      .round-score-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      .round-score-table th,
+      .round-score-table td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .round-score-table th {
+        color: var(--muted);
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .round-score-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .round-score-table tr.is-player td:first-child {
+        color: var(--cyan);
+        font-weight: 900;
+      }
+
+      .round-score-actions {
+        display: flex;
+        justify-content: end;
+        margin-top: 18px;
+      }
+
+      .round-score-actions button {
+        min-width: min(220px, 100%);
       }
 
       .post-match-panel {
@@ -803,7 +1150,25 @@
         .case-opening-overlay::after,
         .case-opening-panel,
         .case-opening-overlay.revealed .case-opening-panel,
-        .case-reel-card {
+        .case-reel-card,
+        .case-launch-case,
+        .case-launch-case::before,
+        .case-launch-case::after,
+        .case-launch-lock,
+        .case-launch-rings,
+        .case-launch-rings::before,
+        .case-launch-rings::after,
+        .round-score-panel {
+          animation: none;
+          transition: none;
+        }
+
+        .case-opening-overlay.anticipating .case-opening-panel,
+        .case-opening-overlay.active .case-launch-case,
+        .case-opening-overlay.rolling .case-launch-case,
+        .case-opening-overlay.rolling .case-launch-rings,
+        .case-opening-overlay.revealed .case-launch-case,
+        .case-opening-overlay.revealed .case-launch-lock {
           animation: none;
           transition: none;
         }
@@ -1566,6 +1931,18 @@
         .post-match-actions {
           flex-direction: column;
         }
+
+        .round-score-stats {
+          grid-template-columns: 1fr;
+        }
+
+        .round-score-heading {
+          flex-direction: column;
+        }
+
+        .round-score-award {
+          text-align: left;
+        }
       }
     </style>
   </head>
@@ -1698,11 +2075,50 @@
       <section class="case-opening-panel">
         <p class="case-opening-eyebrow">WORLD TOUR · SUPPLY DROP</p>
         <h2 id="caseOpeningTitle" class="case-opening-title">Unlocking your case</h2>
+        <div class="case-launch-stage" aria-hidden="true">
+          <div class="case-launch-rings"></div>
+          <div class="case-launch-case">
+            <span class="case-launch-emblem" id="caseLaunchEmblem">✦</span>
+            <span class="case-launch-lock">W</span>
+          </div>
+        </div>
         <div class="case-reel-window">
           <div id="caseReel" class="case-reel"></div>
           <div class="case-reel-pointer" aria-hidden="true"></div>
         </div>
         <p id="caseOpeningStatus" class="case-opening-status">SCANNING REWARD TIERS</p>
+      </section>
+    </div>
+
+    <div id="roundScoreOverlay" class="round-score-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="roundScoreTitle">
+      <section class="round-score-panel">
+        <div class="round-score-heading">
+          <div>
+            <p class="eyebrow" id="roundScoreEyebrow">ROUND 1 SCORECARD</p>
+            <h2 id="roundScoreTitle">Round results</h2>
+            <p id="roundScoreLocation" class="round-score-location"></p>
+          </div>
+          <div class="round-score-award"><span id="roundScorePoints">0</span><small>points this round</small></div>
+        </div>
+        <div class="round-score-stats">
+          <div class="round-score-stat"><span>Your total</span><strong id="roundScoreTotal">0</strong></div>
+          <div class="round-score-stat"><span>Distance</span><strong id="roundScoreDistance">—</strong></div>
+          <div class="round-score-stat"><span>Current streak</span><strong id="roundScoreStreak">0</strong></div>
+        </div>
+        <h3>Points breakdown</h3>
+        <p id="roundScoreBreakdown" class="round-score-breakdown"></p>
+        <h3>Round standings</h3>
+        <div class="round-score-table-wrap">
+          <table class="round-score-table">
+            <thead>
+              <tr><th>#</th><th>Player</th><th>Round points</th><th>Total</th><th>Distance</th></tr>
+            </thead>
+            <tbody id="roundScoreRows"></tbody>
+          </table>
+        </div>
+        <div class="round-score-actions">
+          <button id="roundContinueButton" class="success" onclick="nextRound()">Next round →</button>
+        </div>
       </section>
     </div>
 
@@ -2009,6 +2425,7 @@
 
       function prepareRound(index, placeIndex, broadcast, heading, deadline) {
         clearCaseReveal();
+        closeRoundScore();
         if (index >= roundsPerGame) {
           finishGame();
           return;
@@ -2075,7 +2492,7 @@
           notify("No case is available this round.");
           return;
         }
-        if (roomCode && roundDeadline - Date.now() < 10000) {
+        if (roomCode && roundDeadline - Date.now() < 12000) {
           notify("There is not enough time left in this round to open a case.");
           return;
         }
@@ -2109,9 +2526,21 @@
         const reel = $("caseReel");
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const winnerIndex = 23;
-        const rollDuration = reducedMotion ? 1800 : 6200;
-        const anticipationDuration = reducedMotion ? 0 : 800;
-        const finalSlowdownDuration = reducedMotion ? 0 : 1100;
+        const rollDuration = reducedMotion ? 1800 : 6600;
+        const anticipationDuration = reducedMotion ? 0 : 1400;
+        const finalSlowdownDuration = reducedMotion ? 0 : 1500;
+        const rewardGlow = {
+          ultra: "#f5f9ff",
+          legendary: "#ffd84d",
+          mythical: "#ff5268",
+          epic: "#d39bff",
+          "super-rare": "#4e9bff",
+          rare: "#48db7a",
+        }[reward.css];
+        if (!rewardGlow) {
+          notify("The supply drop reward has an invalid rarity.");
+          return;
+        }
 
         clearCaseReveal();
         reel.replaceChildren();
@@ -2138,21 +2567,26 @@
 
         overlay.classList.remove("revealed");
         overlay.classList.remove("hidden");
+        overlay.classList.add("anticipating");
+        overlay.style.setProperty("--case-reward-glow", rewardGlow);
+        $("caseLaunchEmblem").textContent = "✦";
         caseOpening = true;
         $("submitButton").disabled = true;
         $("caseOpeningTitle").textContent = "Unlocking your case";
-        $("caseOpeningStatus").textContent = reducedMotion ? "REWARD REVEALING…" : "SCANNING REWARD TIERS";
+        $("caseOpeningStatus").textContent = reducedMotion ? "REWARD REVEALING…" : "POWERING UP · CASE SEALED";
         reel.style.transition = "none";
         reel.style.transform = "translateX(0)";
         void reel.offsetWidth;
 
         const revealReward = () => {
+          overlay.classList.remove("rolling");
           overlay.classList.add("revealed");
+          $("caseLaunchEmblem").textContent = reward.emoji;
           $("caseOpeningTitle").textContent = reward.name.toUpperCase() + " DROP";
-          $("caseOpeningStatus").textContent = reward.chance + "% DROP · REWARD SECURED";
+          $("caseOpeningStatus").textContent = "CASE CRACKED · " + reward.chance + "% DROP SECURED";
           caseRevealTimeout = setTimeout(() => {
             overlay.classList.add("hidden");
-            overlay.classList.remove("active", "revealed");
+            overlay.classList.remove("active", "anticipating", "rolling", "revealed");
             caseOpening = false;
             onComplete();
             if (guess && !locked && !roundExpired) $("submitButton").disabled = false;
@@ -2163,7 +2597,7 @@
           overlay.classList.add("active");
           requestAnimationFrame(() => {
             if (anticipationDuration) {
-              $("caseOpeningStatus").textContent = "CASE SEALED · SCANNING REWARD TIERS";
+              $("caseOpeningStatus").textContent = "SCANNING REWARD TIERS · STAND BY";
               caseRevealTimeout = setTimeout(startRoll, anticipationDuration);
             } else {
               startRoll();
@@ -2173,6 +2607,8 @@
 
         function startRoll() {
           requestAnimationFrame(() => {
+            overlay.classList.remove("anticipating");
+            overlay.classList.add("rolling");
             const winner = reel.children[winnerIndex];
             const reelWindow = reel.parentElement;
             const windowBounds = reelWindow.getBoundingClientRect();
@@ -2185,11 +2621,11 @@
             reel.style.transform = "translateX(" + offset + "px)";
 
             if (!reducedMotion) {
-              $("caseOpeningStatus").textContent = "ROLLING · REWARD TIERS IN MOTION";
+              $("caseOpeningStatus").textContent = "REEL SPINNING · REWARD IN PLAY";
               caseRevealTimeout = setTimeout(() => {
                 $("caseOpeningStatus").textContent = "SLOWING DOWN · LOCKING REWARD";
-                caseRevealTimeout = setTimeout(revealReward, rollDuration - finalSlowdownDuration);
-              }, finalSlowdownDuration);
+                caseRevealTimeout = setTimeout(revealReward, finalSlowdownDuration);
+              }, rollDuration - finalSlowdownDuration);
             } else {
               caseRevealTimeout = setTimeout(revealReward, rollDuration);
             }
@@ -2203,7 +2639,9 @@
         const overlay = $("caseOpeningOverlay");
         if (!overlay) return;
         overlay.classList.add("hidden");
-        overlay.classList.remove("active", "revealed");
+        overlay.classList.remove("active", "anticipating", "rolling", "revealed");
+        overlay.style.removeProperty("--case-reward-glow");
+        $("caseLaunchEmblem").textContent = "✦";
         caseOpening = false;
       }
 
@@ -2549,10 +2987,71 @@
           $("nextButton").textContent = roundIndex === roundsPerGame - 1 ? "Final results →" : "Next round →";
         }
         updateHud();
+        showRoundScore(results, place, ownResult);
+      }
+
+      function showRoundScore(results, place, ownResult) {
+        $("roundScoreEyebrow").textContent = "ROUND " + (roundIndex + 1) + " SCORECARD";
+        $("roundScoreTitle").textContent = ownResult?.guess && ownResult.distance <= 25
+          ? "Great guess!"
+          : "Round results";
+        $("roundScoreLocation").textContent = "The location was " + place.name + ", " + place.country + ".";
+        $("roundScorePoints").textContent = (Number(ownResult?.points) || 0).toLocaleString();
+        $("roundScoreTotal").textContent = score.toLocaleString() + " pts";
+        $("roundScoreDistance").textContent = ownResult && Number.isFinite(ownResult.distance)
+          ? Math.round(ownResult.distance).toLocaleString() + " km"
+          : "No guess";
+        $("roundScoreStreak").textContent = (ownResult?.streak || 0).toLocaleString();
+        $("roundScoreBreakdown").textContent = ownResult
+          ? "Accuracy " + (Number(ownResult.accuracyPoints) || 0).toLocaleString() +
+            " · Speed " + (Number(ownResult.speedBonus) || 0).toLocaleString() +
+            " · Precision " + (Number(ownResult.precisionBonus) || 0).toLocaleString() +
+            " · Streak " + (Number(ownResult.streakBonus) || 0).toLocaleString()
+          : "No points this round.";
+
+        const rows = $("roundScoreRows");
+        rows.replaceChildren();
+        results.slice().sort((a, b) => b.total - a.total).forEach((result, index) => {
+          const row = document.createElement("tr");
+          if (result.id === myId) row.classList.add("is-player");
+          const values = [
+            index + 1,
+            result.name + (result.id === myId ? " · You" : ""),
+            (Number(result.points) || 0).toLocaleString() + " pts",
+            (Number(result.total) || 0).toLocaleString() + " pts",
+            result.guess && Number.isFinite(result.distance)
+              ? Math.round(result.distance).toLocaleString() + " km"
+              : "No guess",
+          ];
+          values.forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.append(cell);
+          });
+          rows.append(row);
+        });
+
+        const continueButton = $("roundContinueButton");
+        const canAdvance = !roomCode || isHost;
+        continueButton.disabled = !canAdvance;
+        continueButton.textContent = !canAdvance
+          ? "Waiting for host…"
+          : roundIndex === roundsPerGame - 1 ? "Final results →" : "Next round →";
+        const overlay = $("roundScoreOverlay");
+        overlay.classList.remove("hidden", "active");
+        requestAnimationFrame(() => overlay.classList.add("active"));
+      }
+
+      function closeRoundScore() {
+        const overlay = $("roundScoreOverlay");
+        if (!overlay) return;
+        overlay.classList.remove("active");
+        overlay.classList.add("hidden");
       }
 
       function nextRound() {
         if (!locked || (roomCode && !isHost)) return;
+        closeRoundScore();
         if (roundIndex + 1 >= roundsPerGame) {
           const standings = playerScoreboard().sort((a, b) => b.score - a.score);
           if (roomCode && isHost) broadcastData({ type: "finished", scores: standings });
@@ -2565,6 +3064,7 @@
       }
 
       function finishGame(standings) {
+        closeRoundScore();
         endBlindfold();
         clearInterval(roundTimerInterval);
         roundTimerInterval = null;
@@ -2929,6 +3429,14 @@
           if (Number.isInteger(message.roundsPerGame) && message.roundsPerGame >= 5 && message.roundsPerGame <= 25 &&
               Number.isInteger(message.roundDurationSeconds) && message.roundDurationSeconds >= 30 &&
               message.roundDurationSeconds <= 120) {
+            if (!gameStarted) {
+              score = 0;
+              completed = 0;
+              currentStreak = 0;
+              bestStreak = 0;
+              gameHistory = [];
+            }
+            gameStarted = true;
             roundsPerGame = message.roundsPerGame;
             roundDurationSeconds = message.roundDurationSeconds;
             updateHud();
