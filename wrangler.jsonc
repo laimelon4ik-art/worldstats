@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "caseguessr-room-relay",
+  "main": "multiplayer-worker.js",
+  "compatibility_date": "2026-10-10",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ROOMS",
+        "class_name": "Room"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Room"]
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGIN": "https://laimelon4ik-art.github.io"
+  }
+}

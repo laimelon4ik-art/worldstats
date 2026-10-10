@@ -1148,7 +1148,7 @@
             <button class="ghost" id="joinRoomButton" onclick="joinRoom()">Join room</button>
           </div>
           <div id="roomStatus" class="room-status">Play solo, or create a room and share its code.</div>
-          <div class="room-help">Use the same HTTPS game link. Host: create a room and share its code. Friends: enter the code and join. Keep the host's tab open. Some networks block direct WebRTC links; those need a TURN relay.</div>
+          <div class="room-help">Use the same HTTPS game link. Host: create a room and share its code. Friends: enter the code and join. The relay carries game messages, so mobile hotspots and different networks are supported.</div>
           <div id="roomPlayers" class="room-players"></div>
           <button id="copyRoomButton" class="ghost hidden" onclick="copyRoomCode()">Copy room code</button>
           <button id="startGameButton" class="success hidden" onclick="startMultiplayerGame()" style="width:100%;margin-top:9px">Start game</button>
@@ -1211,11 +1211,10 @@
     <div id="notice" class="hidden"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script>
       "use strict";
 
-      const turnCredentialsEndpoint = "";
+      const roomRelayEndpoint = "";
       const locations = [
         { name: "Shibuya, Tokyo", city: "Tokyo", country: "Japan", continent: "Asia", lat: 35.6590, lon: 139.7036 },
         { name: "Lower Manhattan", city: "New York City", country: "United States", continent: "North America", lat: 40.7212, lon: -73.9974 },
@@ -1288,11 +1287,11 @@
       let fallbackTileLayer = null;
       let mapTileErrors = 0;
       let map;
-      let peer = null;
+      let roomSocket = null;
+      let roomHeartbeat = null;
       let isHost = false;
       let roomCode = "";
       let myId = "";
-      let connections = {};
       let players = {};
       let submissions = {};
 
@@ -1515,14 +1514,17 @@
         $("mapStatus").textContent = "Guess locked in";
 
         if (roomCode && !isHost) {
-          const hostConnection = connections[roomCode];
-          if (!hostConnection || !hostConnection.open) {
+          if (!roomSocket || roomSocket.readyState !== WebSocket.OPEN) {
             locked = false;
             $("submitButton").disabled = false;
             notify("Connection to the host was lost.");
             return;
           }
-          hostConnection.send({ type: "submit", guess });
+          if (!sendRoomMessage({ type: "submit", guess })) {
+            locked = false;
+            $("submitButton").disabled = false;
+            return;
+          }
           $("roundMessage").textContent = "Guess submitted. Waiting for everyone else…";
           $("roundMessage").classList.remove("hidden");
           return;
@@ -1642,62 +1644,6 @@
         return Object.keys(players).map((id) => ({ id, name: players[id].name, score: players[id].score }));
       }
 
-      function createRoom() {
-        if (!window.Peer) {
-          notify("Multiplayer connection library could not be loaded.");
-          return;
-        }
-        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          $("roomStatus").textContent = "Rooms need a secure HTTPS game link. Upload this page to a static host first; file:// links cannot connect friends reliably.";
-          notify("Open the game from a public HTTPS link to play online.");
-          return;
-        }
-        if (peer) peer.destroy();
-        roomCode = Math.random().toString(36).slice(2, 8).toUpperCase();
-        isHost = true;
-        players = {};
-        connections = {};
-        const hostName = playerName();
-        const requestedRoomCode = roomCode;
-        $("roomStatus").textContent = "Preparing secure room connection…";
-        $("createRoomButton").disabled = true;
-        peerOptions().then((options) => {
-          if (roomCode !== requestedRoomCode) return;
-          $("roomStatus").textContent = "Creating room…";
-          peer = new Peer(requestedRoomCode, options);
-          attachHostPeerHandlers(hostName, requestedRoomCode);
-        }).catch((error) => {
-          if (roomCode !== requestedRoomCode) return;
-          $("roomStatus").textContent = "Could not prepare multiplayer: " + error.message;
-          $("createRoomButton").disabled = false;
-          notify("Secure room setup failed.");
-        });
-      }
-
-      function attachHostPeerHandlers(hostName, requestedRoomCode) {
-        peer.on("open", (id) => {
-          myId = id;
-          players[myId] = { name: hostName, score: 0, connected: true };
-          $("roomStatus").innerHTML = "Share code <span class=\"room-code\">" + roomCode + "</span> with friends.";
-          $("copyRoomButton").classList.remove("hidden");
-          $("startGameButton").classList.remove("hidden");
-          $("startGameButton").disabled = true;
-          $("startGameButton").textContent = "Waiting for friends…";
-          $("multiplayerBadge").textContent = "ROOM " + roomCode;
-          $("createRoomButton").disabled = true;
-          renderPlayers();
-        });
-        peer.on("connection", handleIncomingConnection);
-        peer.on("error", (error) => {
-          if (roomCode !== requestedRoomCode) return;
-          $("roomStatus").textContent = error.type === "unavailable-id"
-            ? "That room code is already in use. Create another room."
-            : "Room connection error: " + error.type + ". Check your internet and try again.";
-          notify("Could not create or maintain the room.");
-          $("createRoomButton").disabled = false;
-        });
-      }
-
       function copyRoomCode() {
         if (!roomCode) return;
         if (!navigator.clipboard) {
@@ -1709,68 +1655,112 @@
           .catch(() => notify("Copy failed. Share room code " + roomCode + " manually."));
       }
 
-      async function peerOptions() {
-        const iceServers = [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun.cloudflare.com:3478" },
-        ];
-        const endpoint = turnCredentialsEndpoint;
-        if (endpoint) {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 12000);
-          let response;
-          try {
-            response = await fetch(endpoint, {
-              headers: { Accept: "application/json" },
-              signal: controller.signal,
-            });
-          } finally {
-            clearTimeout(timeout);
-          }
-          if (!response.ok) throw new Error("TURN relay returned HTTP " + response.status + ".");
-          const relayServers = await response.json();
-          if (!Array.isArray(relayServers) || !relayServers.some((server) => {
-            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
-            return urls.some((url) => typeof url === "string" && url.startsWith("turn:"));
-          })) {
-            throw new Error("TURN relay returned no usable credentials.");
-          }
-          iceServers.push(...relayServers);
-        }
-        return {
-          debug: 1,
-          config: {
-            iceServers,
-            sdpSemantics: "unified-plan",
-          },
-        };
-      }
-
-      function roomConnectionError(error) {
-        if (error.type === "peer-unavailable") {
-          return "No active room uses that code. Ask the host to create a new room and share its current code.";
-        }
-        if (error.type === "network" || error.type === "server-error" || error.type === "socket-error" || error.type === "socket-closed") {
-          return "Could not reach the room service. Check the internet connection and try again.";
-        }
-        return "Room connection error: " + error.type + ". Check the code and try again.";
-      }
-
-      function showIceFailure(code) {
-        if (roomCode !== code) return;
-        $("roomStatus").textContent = turnCredentialsEndpoint
-          ? "The room was found, but the device-to-device link failed even with the TURN relay. Try another network or check the relay configuration."
-          : "The room was found, but this game has no TURN relay configured yet. Your network blocks direct connections. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
-      }
-
-      async function joinRoom() {
-        if (!window.Peer) {
-          notify("Multiplayer connection library could not be loaded.");
+      function openRoomSocket(code, role) {
+        if (!roomRelayEndpoint) {
+          $("roomStatus").textContent = "Online rooms need the shared room relay. Follow the one-time setup in README, then reload the game.";
+          notify("Multiplayer relay is not configured yet.");
+          $("createRoomButton").disabled = false;
+          $("joinRoomButton").disabled = false;
           return;
         }
+        const endpoint = new URL(roomRelayEndpoint);
+        endpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
+        endpoint.pathname = endpoint.pathname.replace(/\/$/, "") + "/room/" + encodeURIComponent(code);
+        endpoint.search = new URLSearchParams({ role }).toString();
+        const socket = new WebSocket(endpoint);
+        roomSocket = socket;
+        socket.addEventListener("open", () => {
+          if (roomSocket !== socket) return;
+          clearInterval(roomHeartbeat);
+          roomHeartbeat = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "ping" }));
+          }, 25000);
+        });
+        socket.addEventListener("message", (event) => {
+          let message;
+          try {
+            message = JSON.parse(event.data);
+          } catch {
+            $("roomStatus").textContent = "The room relay sent an invalid message. Please reload and try again.";
+            return;
+          }
+          handleRelayMessage(message, code, role);
+        });
+        socket.addEventListener("error", () => {
+          if (roomSocket !== socket || roomCode !== code) return;
+          $("roomStatus").textContent = "Could not reach the multiplayer relay. Check its setup and try again.";
+          $("createRoomButton").disabled = false;
+          $("joinRoomButton").disabled = false;
+        });
+        socket.addEventListener("close", (event) => {
+          if (roomSocket !== socket || roomCode !== code) return;
+          clearInterval(roomHeartbeat);
+          roomHeartbeat = null;
+          if (event.code === 4001) {
+            $("roomStatus").textContent = role === "host"
+              ? "That room code is already in use. Create a new room."
+              : "No active room uses that code. Ask the host to create a new room and share its current code.";
+          } else if (event.code === 4003) {
+            $("roomStatus").textContent = "No active room uses that code. Ask the host to create a room and share its current code.";
+          } else if (event.code === 4004) {
+            $("roomStatus").textContent = "This room is full. Ask the host to create another room.";
+          } else if (event.code === 4002) {
+            $("roomStatus").textContent = "The host left the room. Ask them to create a new room.";
+          } else if (event.code !== 1000) {
+            $("roomStatus").textContent = "The multiplayer relay disconnected. Check your connection and rejoin the room.";
+          }
+          if (role === "guest") {
+            $("createRoomButton").disabled = false;
+            $("joinRoomButton").disabled = false;
+          }
+        });
+        return socket;
+      }
+
+      function createRoom() {
+        if (!window.WebSocket) {
+          notify("This browser does not support online rooms.");
+          return;
+        }
+        if (!roomRelayEndpoint) {
+          $("roomStatus").textContent = "The multiplayer relay is not configured yet. Complete the one-time Cloudflare setup in README, then reload.";
+          notify("The online relay needs a one-time setup.");
+          return;
+        }
+        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          $("roomStatus").textContent = "Rooms need a secure HTTPS game link. Upload this page to a static host first.";
+          notify("Open the game from a public HTTPS link to play online.");
+          return;
+        }
+        if (roomSocket) roomSocket.close();
+        roomCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+        isHost = true;
+        gameStarted = false;
+        players = {};
+        submissions = {};
+        myId = "host";
+        $("roomPlayers").textContent = "";
+        $("roomStatus").textContent = "Connecting to the room relay…";
+        $("createRoomButton").disabled = true;
+        $("joinRoomButton").disabled = true;
+        try {
+          openRoomSocket(roomCode, "host");
+        } catch (error) {
+          $("roomStatus").textContent = "Could not start the room: " + error.message;
+          $("createRoomButton").disabled = false;
+          $("joinRoomButton").disabled = false;
+        }
+      }
+
+      function joinRoom() {
         const code = $("roomCodeInput").value.trim().toUpperCase();
         if (!/^[A-Z0-9]{5,12}$/.test(code)) {
           notify("Enter a valid 5–12 character room code.");
+          return;
+        }
+        if (!roomRelayEndpoint) {
+          $("roomStatus").textContent = "The multiplayer relay is not configured yet. Complete the one-time Cloudflare setup in README, then reload.";
+          notify("The online relay needs a one-time setup.");
           return;
         }
         if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
@@ -1778,133 +1768,95 @@
           notify("Online rooms are unavailable from file:// pages.");
           return;
         }
-        if (peer) peer.destroy();
+        if (roomSocket) roomSocket.close();
         roomCode = code;
         isHost = false;
         players = {};
-        connections = {};
-        $("roomStatus").textContent = "Connecting to room…";
+        submissions = {};
+        $("roomStatus").textContent = "Connecting to the room relay…";
         $("createRoomButton").disabled = true;
         $("joinRoomButton").disabled = true;
-        let options;
         try {
-          options = await peerOptions();
+          openRoomSocket(code, "guest");
         } catch (error) {
-          if (roomCode !== code) return;
-          $("roomStatus").textContent = "Could not prepare multiplayer: " + error.message;
+          $("roomStatus").textContent = "Could not join the room: " + error.message;
           $("createRoomButton").disabled = false;
           $("joinRoomButton").disabled = false;
-          notify("Secure room setup failed.");
-          return;
         }
-        if (roomCode !== code) return;
-        peer = new Peer(options);
-        let peerOpened = false;
-        peer.on("open", (id) => {
-          peerOpened = true;
-          myId = id;
-          const connection = peer.connect(code, { reliable: true });
-          connections[code] = connection;
-          connection.on("iceStateChanged", (state) => {
-            if (state === "failed") showIceFailure(code);
-          });
-          if (connection.peerConnection) {
-            connection.peerConnection.addEventListener("iceconnectionstatechange", () => {
-              if (connection.peerConnection.iceConnectionState === "failed") showIceFailure(code);
-            });
-            connection.peerConnection.addEventListener("connectionstatechange", () => {
-              if (connection.peerConnection.connectionState === "failed") showIceFailure(code);
-            });
-          }
-          connection.on("open", () => {
-            connection.send({ type: "join", name: playerName() });
-            $("roomStatus").textContent = "Connected. Waiting for the host to start.";
-            $("multiplayerBadge").textContent = "ROOM " + roomCode;
-            $("createRoomButton").disabled = true;
-            $("joinRoomButton").disabled = true;
-          });
-          connection.on("data", handleRoomMessage);
-          connection.on("close", () => {
-            $("roomStatus").textContent = "Disconnected from the room.";
-            notify("The host connection closed.");
-          });
-          connection.on("error", () => {
-            showIceFailure(code);
-          });
-          setTimeout(() => {
-            if (!connection.open && roomCode === code) {
-              const peerConnection = connection.peerConnection;
-              if (peerConnection && (peerConnection.connectionState === "failed" || peerConnection.iceConnectionState === "failed")) {
-                showIceFailure(code);
-              } else {
-                $("roomStatus").textContent = "Could not connect. Check that the room code is current and both devices use the same HTTPS link. If the host is still waiting, the network may require a TURN relay.";
-              }
-              $("createRoomButton").disabled = false;
-              $("joinRoomButton").disabled = false;
-            }
-          }, 20000);
-        });
-        peer.on("error", (error) => {
-          $("roomStatus").textContent = roomConnectionError(error);
-          notify(error.type === "peer-unavailable" ? "That room code is not active." : "Could not connect to the room.");
-          $("createRoomButton").disabled = false;
-          $("joinRoomButton").disabled = false;
-        });
-        setTimeout(() => {
-          if (!peerOpened && roomCode === code) {
-            $("roomStatus").textContent = "Could not reach the room service. Check your internet and try again.";
+      }
+
+      function handleRelayMessage(packet, code, role) {
+        if (!packet || typeof packet !== "object" || roomCode !== code) return;
+        if (packet.type === "pong") return;
+        if (packet.type === "error") {
+          $("roomStatus").textContent = packet.message || "The room relay rejected the connection.";
+          if (role === "guest") {
             $("createRoomButton").disabled = false;
             $("joinRoomButton").disabled = false;
           }
-        }, 15000);
-      }
-
-      function handleIncomingConnection(connection) {
-        connection.on("error", () => {
-          $("roomStatus").textContent = turnCredentialsEndpoint
-            ? "A friend found the room, but their network could not establish the WebRTC link. Check the relay setup or try the same Wi-Fi."
-            : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
-        });
-        connection.on("iceStateChanged", (state) => {
-          if (state === "failed") {
-            $("roomStatus").textContent = turnCredentialsEndpoint
-              ? "A friend found the room, but their network could not establish the link. Check the relay setup or try the same Wi-Fi."
-              : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
-          }
-        });
-        if (connection.peerConnection) {
-          connection.peerConnection.addEventListener("iceconnectionstatechange", () => {
-            if (connection.peerConnection.iceConnectionState === "failed") {
-              $("roomStatus").textContent = turnCredentialsEndpoint
-                ? "A friend found the room, but their network could not establish the link. Check the relay setup or try the same Wi-Fi."
-                : "A friend found the room, but this game has no TURN relay configured yet. Try both devices on the same Wi-Fi for now; cross-network play needs the TURN setup in README.";
-            }
-          });
-        }
-        connection.on("data", (message) => {
-          if (message.type === "join") {
-            players[connection.peer] = { name: String(message.name || "Player").slice(0, 18), score: 0, connected: true };
-            connections[connection.peer] = connection;
-            renderPlayers();
-            connection.send({ type: "lobby", players: playerScoreboard() });
-            if (gameStarted) connection.send({ type: "round", roundIndex, locationIndex });
-            broadcastLobby();
-          } else if (message.type === "submit") {
-            addSubmission(connection.peer, message.guess);
-          }
-        });
-        connection.on("close", () => {
-          if (players[connection.peer]) players[connection.peer].connected = false;
+        } else if (role === "host" && packet.type === "ready") {
+          players[myId] = { name: playerName(), score: 0, connected: true };
+          $("roomStatus").innerHTML = "Room is live. Share code <span class=\"room-code\">" + roomCode + "</span> with friends.";
+          $("copyRoomButton").classList.remove("hidden");
+          $("startGameButton").classList.remove("hidden");
+          $("startGameButton").disabled = true;
+          $("startGameButton").textContent = "Waiting for friends…";
+          $("multiplayerBadge").textContent = "ROOM " + roomCode;
+          renderPlayers();
+        } else if (role === "guest" && packet.type === "welcome") {
+          myId = packet.playerId;
+          $("roomStatus").textContent = "Connected to room relay. Waiting for the host to start.";
+          $("multiplayerBadge").textContent = "ROOM " + roomCode;
+          sendRoomMessage({ type: "join", name: playerName() });
+        } else if (role === "host" && packet.type === "player-joined") {
+          players[packet.playerId] = { name: "Joining…", score: 0, connected: true };
+          renderPlayers();
+        } else if (role === "host" && packet.type === "player-left") {
+          if (players[packet.playerId]) players[packet.playerId].connected = false;
           renderPlayers();
           broadcastLobby();
           tryFinishMultiplayerRound();
-        });
+        } else if (role === "host" && packet.type === "client-message") {
+          handlePlayerMessage(packet.playerId, packet.message);
+        } else if (role === "guest" && packet.type === "message") {
+          handleRoomMessage(packet.message);
+        }
+      }
+
+      function sendRoomMessage(message) {
+        if (!roomSocket || roomSocket.readyState !== WebSocket.OPEN) {
+          $("roomStatus").textContent = "The room relay disconnected. Rejoin the room before sending another message.";
+          return false;
+        }
+        const packet = isHost
+          ? { type: "broadcast", message }
+          : { type: "client-message", message };
+        try {
+          roomSocket.send(JSON.stringify(packet));
+          return true;
+        } catch (error) {
+          $("roomStatus").textContent = "Could not send the room message: " + error.message;
+          return false;
+        }
+      }
+
+      function handlePlayerMessage(playerId, message) {
+        if (!message || typeof message !== "object") return;
+        if (message.type === "join") {
+          if (!players[playerId]) players[playerId] = { name: "Player", score: 0, connected: true };
+          players[playerId].name = String(message.name || "Player").slice(0, 18);
+          players[playerId].connected = true;
+          renderPlayers();
+          if (gameStarted) broadcastData({ type: "round", roundIndex, locationIndex });
+          broadcastLobby();
+        } else if (message.type === "submit") {
+          addSubmission(playerId, message.guess);
+        }
       }
 
       function broadcastData(message) {
-        Object.values(connections).forEach((connection) => {
-          if (connection.open) connection.send(message);
-        });
+        if (!isHost || !roomSocket || roomSocket.readyState !== WebSocket.OPEN) return;
+        sendRoomMessage(message);
       }
 
       function broadcastLobby() {
