@@ -179,56 +179,212 @@
       }
 
       .case-box {
+        --case-accent: #53deef;
+        --case-accent-rgb: 83, 222, 239;
         position: relative;
         width: 100%;
-        height: 170px;
+        min-height: 154px;
         margin-top: 12px;
-        border-radius: 20px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        border-radius: 17px;
+        border: 1px solid rgba(var(--case-accent-rgb), 0.38);
         background:
-          linear-gradient(135deg, rgba(255,255,255,0.13), rgba(255,255,255,0.02)),
-          linear-gradient(150deg, #0d1b2d, #132b41 45%, #071521 100%);
-        border: 1px solid rgba(146, 191, 255, 0.2);
+          radial-gradient(ellipse at 20% 55%, rgba(var(--case-accent-rgb), 0.2), transparent 57%),
+          linear-gradient(130deg, #101e2d, #09121e 75%);
         overflow: hidden;
-        display: grid;
-        place-items: center;
-        box-shadow: inset 0 0 24px rgba(255,255,255,0.08);
+        box-shadow: inset 0 0 32px rgba(var(--case-accent-rgb), 0.08), 0 12px 30px rgba(0, 0, 0, 0.24);
+        transition: border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease;
       }
 
       .case-box::before {
         content: "";
         position: absolute;
-        inset: 10px;
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.15);
+        inset: 0;
+        opacity: 0.2;
+        background-image: linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+        background-size: 22px 22px;
+        mask-image: linear-gradient(90deg, black, transparent 85%);
+        pointer-events: none;
       }
 
       .case-box::after {
         content: "";
         position: absolute;
-        width: 160%;
-        height: 50%;
-        left: -30%;
-        top: 18%;
-        transform: rotate(-18deg);
-        background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+        top: -45%;
+        left: -65%;
+        width: 45%;
+        height: 190%;
+        transform: rotate(24deg);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+        pointer-events: none;
+      }
+
+      .case-box.ready {
+        animation: casePulse 2.8s ease-in-out infinite;
+      }
+
+      .case-box.legendary { --case-accent: #ffd36a; --case-accent-rgb: 255, 211, 106; }
+      .case-box.epic { --case-accent: #d39bff; --case-accent-rgb: 211, 155, 255; }
+      .case-box.rare { --case-accent: #74d0ff; --case-accent-rgb: 116, 208, 255; }
+      .case-box.common { --case-accent: #c6d4e5; --case-accent-rgb: 198, 212, 229; }
+
+      .case-art {
+        position: relative;
+        z-index: 1;
+        flex: 0 0 83px;
+        height: 104px;
+        filter: drop-shadow(0 12px 12px rgba(0,0,0,0.4));
+        transform: perspective(450px) rotateY(-10deg) rotateX(3deg);
+        transition: transform 0.4s ease;
+      }
+
+      .case-box:hover .case-art {
+        transform: perspective(450px) rotateY(0) rotateX(0) translateY(-3px);
+      }
+
+      .case-art-top {
+        position: absolute;
+        left: 9px;
+        top: 3px;
+        width: 68px;
+        height: 14px;
+        border: 1px solid rgba(255,255,255,0.28);
+        background: linear-gradient(110deg, #52677a, #213347 55%, #718498);
+        clip-path: polygon(12% 0, 100% 0, 87% 100%, 0 100%);
+      }
+
+      .case-art-face {
+        position: absolute;
+        inset: 13px 7px 2px 7px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,0.32);
+        border-radius: 5px 8px 9px 5px;
+        background:
+          linear-gradient(90deg, rgba(255,255,255,0.2), transparent 15%, transparent 82%, rgba(0,0,0,0.3)),
+          linear-gradient(145deg, rgba(var(--case-accent-rgb),0.85), #17334a 52%, #0a1420);
+        box-shadow: inset 0 0 0 3px rgba(3,10,17,0.46), inset 0 0 18px rgba(0,0,0,0.35);
+      }
+
+      .case-art-face::before,
+      .case-art-face::after {
+        content: "";
+        position: absolute;
+        left: 7px;
+        right: 7px;
+        height: 3px;
+        background: rgba(241,249,255,0.72);
+        box-shadow: 0 2px 7px rgba(0,0,0,0.25);
+      }
+
+      .case-art-face::before { top: 12px; }
+      .case-art-face::after { bottom: 12px; }
+
+      .case-stripes {
+        position: absolute;
+        inset: 0 12px;
+        opacity: 0.56;
+        background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(5,15,24,0.55) 9px 13px);
+      }
+
+      .case-emblem {
+        position: relative;
+        z-index: 1;
+        width: 37px;
+        height: 37px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,0.78);
+        border-radius: 50%;
+        background: rgba(6,16,25,0.72);
+        color: #fff;
+        font-size: 21px;
+        line-height: 1;
+        text-shadow: 0 0 12px rgba(var(--case-accent-rgb),0.9);
+        box-shadow: 0 0 20px rgba(var(--case-accent-rgb),0.45);
+      }
+
+      .case-lock {
+        position: absolute;
+        z-index: 2;
+        right: 2px;
+        top: 47px;
+        width: 12px;
+        height: 17px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,0.68);
+        border-radius: 3px;
+        background: linear-gradient(135deg, #e9f1f8, #74889a);
+        color: #122233;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .case-copy {
+        position: relative;
+        z-index: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .case-kicker,
+      .case-edition {
+        color: rgba(224,239,250,0.72);
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+      }
+
+      .case-kicker { color: var(--case-accent); }
+
+      .case-name {
+        color: #f5f9ff;
+        font-size: 15px;
+        font-weight: 950;
+        line-height: 1.14;
+        letter-spacing: 0.075em;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.45);
+      }
+
+      .case-edition { font-size: 8px; }
+
+      @keyframes casePulse {
+        0%, 100% { box-shadow: inset 0 0 32px rgba(var(--case-accent-rgb), 0.08), 0 12px 30px rgba(0,0,0,0.24); }
+        50% { box-shadow: inset 0 0 35px rgba(var(--case-accent-rgb), 0.15), 0 0 22px rgba(var(--case-accent-rgb), 0.14); }
+      }
+
+      @keyframes caseSheen {
+        0% { left: -65%; }
+        100% { left: 125%; }
       }
 
       .case-box.opening {
-        animation: popCase 0.8s ease;
+        animation: popCase 0.85s cubic-bezier(.2,.8,.2,1);
+      }
+
+      .case-box.opening::after {
+        animation: caseSheen 0.8s ease-out;
       }
 
       @keyframes popCase {
         0% { transform: scale(1); }
-        40% { transform: scale(1.06) rotate(-2deg); }
-        70% { transform: scale(0.98); }
+        28% { transform: scale(1.045) rotate(-1deg); }
+        58% { transform: scale(0.99) rotate(0.4deg); }
         100% { transform: scale(1); }
       }
 
       .case-core {
         position: relative;
         z-index: 1;
-        font-size: 4rem;
-        filter: drop-shadow(0 0 22px rgba(255,255,255,0.25));
+        font-size: 21px;
+        font-weight: 900;
       }
 
       .case-button {
@@ -244,10 +400,11 @@
 
       .case-result {
         margin-top: 16px;
-        border-radius: 12px;
-        padding: 14px 12px;
-        background: rgba(255,255,255,0.04);
+        border-radius: 13px;
+        padding: 13px;
+        background: linear-gradient(120deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025));
         border: 1px solid var(--stroke);
+        box-shadow: inset 3px 0 currentColor;
       }
 
       .case-result strong {
@@ -260,6 +417,15 @@
       .epic { color: var(--purple); }
       .rare { color: #74d0ff; }
       .common { color: #dfe7f3; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .case-box,
+        .case-box.opening,
+        .case-box.opening::after {
+          animation: none;
+          transition: none;
+        }
+      }
 
       .stats-block {
         display: grid;
@@ -664,12 +830,44 @@
       }
 
       .case-box {
-        height: 95px;
+        min-height: 118px;
         margin-top: 0;
+        padding: 10px;
+        gap: 11px;
       }
 
-      .case-core {
-        font-size: 2.5rem;
+      .case-art {
+        flex-basis: 66px;
+        height: 87px;
+      }
+
+      .case-art-top {
+        left: 7px;
+        width: 54px;
+        height: 12px;
+      }
+
+      .case-art-face {
+        inset: 11px 5px 2px;
+      }
+
+      .case-emblem {
+        width: 31px;
+        height: 31px;
+        font-size: 18px;
+      }
+
+      .case-lock {
+        top: 39px;
+        right: 0;
+      }
+
+      .case-name {
+        font-size: 13px;
+      }
+
+      .case-kicker {
+        font-size: 8px;
       }
 
       .case-button {
@@ -950,16 +1148,30 @@
             <button class="ghost" id="joinRoomButton" onclick="joinRoom()">Join room</button>
           </div>
           <div id="roomStatus" class="room-status">Play solo, or create a room and share its code.</div>
-          <div class="room-help">Use the same public HTTPS game link. Host: create a room, share the code, wait for friends, then start. Friends: enter the code and join. Keep the host's page open.</div>
+          <div class="room-help">Use the same HTTPS game link. Host: create a room and share its code. Friends: enter the code and join. Keep the host's tab open. Some networks block direct WebRTC links; those need a TURN relay.</div>
           <div id="roomPlayers" class="room-players"></div>
           <button id="copyRoomButton" class="ghost hidden" onclick="copyRoomCode()">Copy room code</button>
           <button id="startGameButton" class="success hidden" onclick="startMultiplayerGame()" style="width:100%;margin-top:9px">Start game</button>
         </section>
 
-        <section class="panel panel-inner">
-          <div class="panel-header">Case slot</div>
-          <div class="case-box" id="caseBox"><div class="case-core" id="caseEmoji">🎁</div></div>
-          <button id="openCaseButton" class="case-button" onclick="openCase()">Open Case</button>
+        <section class="panel panel-inner case-panel">
+          <div class="panel-header">World Tour · Supply Drop</div>
+          <div class="case-box ready common" id="caseBox" aria-label="Sealed World Tour supply case">
+            <div class="case-art" aria-hidden="true">
+              <div class="case-art-top"></div>
+              <div class="case-art-face">
+                <div class="case-stripes"></div>
+                <div class="case-emblem"><span id="caseEmoji" class="case-core">✦</span></div>
+              </div>
+              <div class="case-lock">C</div>
+            </div>
+            <div class="case-copy">
+              <span id="caseTierLabel" class="case-kicker">SEALED DROP · SERIES 01</span>
+              <strong id="caseName" class="case-name">WORLD TOUR SUPPLY CASE</strong>
+              <span class="case-edition">CASEGUESSR · GLOBAL COLLECTION</span>
+            </div>
+          </div>
+          <button id="openCaseButton" class="case-button" onclick="openCase()">Unlock supply drop</button>
           <div class="case-status" id="casesLeft">Case ready: 1</div>
           <div id="caseResult" class="case-result hidden">
             <strong id="caseRarity" class="common">Common</strong>
@@ -1003,6 +1215,7 @@
     <script>
       "use strict";
 
+      const turnCredentialsEndpoint = "";
       const locations = [
         { name: "Shibuya, Tokyo", city: "Tokyo", country: "Japan", continent: "Asia", lat: 35.6590, lon: 139.7036 },
         { name: "Lower Manhattan", city: "New York City", country: "United States", continent: "North America", lat: 40.7212, lon: -73.9974 },
@@ -1049,10 +1262,10 @@
       const roundsPerGame = 8;
 
       const rewards = [
-        { name: "Legendary", css: "legendary", type: "coordinates", emoji: "💎" },
-        { name: "Epic", css: "epic", type: "city", emoji: "🟣" },
-        { name: "Rare", css: "rare", type: "country", emoji: "🔵" },
-        { name: "Common", css: "common", type: "continent", emoji: "⚪" },
+        { name: "Legendary", css: "legendary", type: "coordinates", emoji: "💎", chance: 2 },
+        { name: "Epic", css: "epic", type: "city", emoji: "🟣", chance: 13 },
+        { name: "Rare", css: "rare", type: "country", emoji: "🔵", chance: 35 },
+        { name: "Common", css: "common", type: "continent", emoji: "⚪", chance: 50 },
       ];
 
       let roundIndex = 0;
@@ -1204,8 +1417,12 @@
         $("nextButton").classList.add("hidden");
         $("sceneTitle").textContent = "Look around. Find your clues. Drop your guess.";
         $("rewardText").textContent = "No reward unlocked";
-        $("casesLeft").textContent = caseAvailable ? "Case ready" : "No case this round";
-        $("caseEmoji").textContent = caseAvailable ? "🎁" : "⏳";
+        $("casesLeft").textContent = caseAvailable ? "Supply drop ready" : "No case this round";
+        $("caseBox").className = "case-box " + (caseAvailable ? "ready" : "locked") + " common";
+        $("caseBox").setAttribute("aria-label", caseAvailable ? "Sealed World Tour supply case ready to open" : "Supply case unavailable this round");
+        $("caseTierLabel").textContent = caseAvailable ? "SEALED DROP · SERIES 01" : "DROP UNAVAILABLE";
+        $("caseName").textContent = "WORLD TOUR SUPPLY CASE";
+        $("caseEmoji").textContent = caseAvailable ? "✦" : "—";
         $("openCaseButton").disabled = !caseAvailable || (!isHost && !!roomCode);
         $("caseResult").classList.add("hidden");
         $("caseRarity").className = "common";
@@ -1239,20 +1456,25 @@
           country: "Country: " + place.country,
           continent: "Continent: " + place.continent,
         };
-        applyCaseReward(reward.name, reward.css, reward.emoji, hints[reward.type]);
+        applyCaseReward(reward.name, reward.css, reward.emoji, hints[reward.type], reward.chance);
         if (roomCode && isHost) {
-          broadcastData({ type: "hint", name: reward.name, css: reward.css, emoji: reward.emoji, hint: hints[reward.type] });
+          broadcastData({ type: "hint", name: reward.name, css: reward.css, emoji: reward.emoji, hint: hints[reward.type], chance: reward.chance });
         }
       }
 
-      function applyCaseReward(name, css, emoji, hint) {
+      function applyCaseReward(name, css, emoji, hint, chance) {
         caseUsed = true;
         caseAvailable = 0;
         const box = $("caseBox");
         box.classList.remove("opening");
         void box.offsetWidth;
+        box.classList.remove("ready", "locked", "legendary", "epic", "rare", "common");
+        box.classList.add(css);
         box.classList.add("opening");
-        $("caseRarity").textContent = name;
+        $("caseBox").setAttribute("aria-label", name + " supply case reward revealed");
+        $("caseTierLabel").textContent = name.toUpperCase() + " DROP · " + chance + "%";
+        $("caseName").textContent = name.toUpperCase() + " RECON CARD";
+        $("caseRarity").textContent = name + " · " + chance + "% drop";
         $("caseRarity").className = css;
         $("caseReward").textContent = hint;
         $("caseResult").classList.remove("hidden");
@@ -1425,19 +1647,34 @@
           notify("Multiplayer connection library could not be loaded.");
           return;
         }
-        if (peer) peer.destroy();
         if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
           $("roomStatus").textContent = "Rooms need a secure HTTPS game link. Upload this page to a static host first; file:// links cannot connect friends reliably.";
           notify("Open the game from a public HTTPS link to play online.");
           return;
         }
+        if (peer) peer.destroy();
         roomCode = Math.random().toString(36).slice(2, 8).toUpperCase();
         isHost = true;
         players = {};
         connections = {};
         const hostName = playerName();
-        $("roomStatus").textContent = "Creating room…";
-        peer = new Peer(roomCode, peerOptions());
+        const requestedRoomCode = roomCode;
+        $("roomStatus").textContent = "Preparing secure room connection…";
+        $("createRoomButton").disabled = true;
+        peerOptions().then((options) => {
+          if (roomCode !== requestedRoomCode) return;
+          $("roomStatus").textContent = "Creating room…";
+          peer = new Peer(requestedRoomCode, options);
+          attachHostPeerHandlers(hostName, requestedRoomCode);
+        }).catch((error) => {
+          if (roomCode !== requestedRoomCode) return;
+          $("roomStatus").textContent = "Could not prepare multiplayer: " + error.message;
+          $("createRoomButton").disabled = false;
+          notify("Secure room setup failed.");
+        });
+      }
+
+      function attachHostPeerHandlers(hostName, requestedRoomCode) {
         peer.on("open", (id) => {
           myId = id;
           players[myId] = { name: hostName, score: 0, connected: true };
@@ -1452,6 +1689,7 @@
         });
         peer.on("connection", handleIncomingConnection);
         peer.on("error", (error) => {
+          if (roomCode !== requestedRoomCode) return;
           $("roomStatus").textContent = error.type === "unavailable-id"
             ? "That room code is already in use. Create another room."
             : "Room connection error: " + error.type + ". Check your internet and try again.";
@@ -1471,25 +1709,59 @@
           .catch(() => notify("Copy failed. Share room code " + roomCode + " manually."));
       }
 
-      function peerOptions() {
+      async function peerOptions() {
+        const iceServers = [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun.cloudflare.com:3478" },
+        ];
+        const endpoint = turnCredentialsEndpoint;
+        if (endpoint) {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          let response;
+          try {
+            response = await fetch(endpoint, {
+              headers: { Accept: "application/json" },
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(timeout);
+          }
+          if (!response.ok) throw new Error("TURN relay returned HTTP " + response.status + ".");
+          const relayServers = await response.json();
+          if (!Array.isArray(relayServers) || !relayServers.some((server) => {
+            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+            return urls.some((url) => typeof url === "string" && url.startsWith("turn:"));
+          })) {
+            throw new Error("TURN relay returned no usable credentials.");
+          }
+          iceServers.push(...relayServers);
+        }
         return {
           debug: 1,
           config: {
-            iceServers: [
-              { urls: "stun:stun.l.google.com:19302" },
-              { urls: "stun:stun.cloudflare.com:3478" },
-              { urls: "turn:eu-0.turn.peerjs.com:3478", username: "peerjs", credential: "peerjsp" },
-              { urls: "turn:us-0.turn.peerjs.com:3478", username: "peerjs", credential: "peerjsp" },
-              { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-              { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-              { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-            ],
+            iceServers,
             sdpSemantics: "unified-plan",
           },
         };
       }
 
-      function joinRoom() {
+      function roomConnectionError(error) {
+        if (error.type === "peer-unavailable") {
+          return "No active room uses that code. Ask the host to create a new room and share its current code.";
+        }
+        if (error.type === "network" || error.type === "server-error" || error.type === "socket-error" || error.type === "socket-closed") {
+          return "Could not reach the room service. Check the internet connection and try again.";
+        }
+        return "Room connection error: " + error.type + ". Check the code and try again.";
+      }
+
+      function showIceFailure(code) {
+        if (roomCode !== code) return;
+        $("roomStatus").textContent = "The room was found, but this network blocked the device-to-device link. The host can stay in the room; try both devices on the same Wi-Fi. Some networks need a TURN relay.";
+      }
+
+      async function joinRoom() {
         if (!window.Peer) {
           notify("Multiplayer connection library could not be loaded.");
           return;
@@ -1512,13 +1784,36 @@
         $("roomStatus").textContent = "Connecting to room…";
         $("createRoomButton").disabled = true;
         $("joinRoomButton").disabled = true;
-        peer = new Peer(peerOptions());
+        let options;
+        try {
+          options = await peerOptions();
+        } catch (error) {
+          if (roomCode !== code) return;
+          $("roomStatus").textContent = "Could not prepare multiplayer: " + error.message;
+          $("createRoomButton").disabled = false;
+          $("joinRoomButton").disabled = false;
+          notify("Secure room setup failed.");
+          return;
+        }
+        if (roomCode !== code) return;
+        peer = new Peer(options);
         let peerOpened = false;
         peer.on("open", (id) => {
           peerOpened = true;
           myId = id;
           const connection = peer.connect(code, { reliable: true });
           connections[code] = connection;
+          connection.on("iceStateChanged", (state) => {
+            if (state === "failed") showIceFailure(code);
+          });
+          if (connection.peerConnection) {
+            connection.peerConnection.addEventListener("iceconnectionstatechange", () => {
+              if (connection.peerConnection.iceConnectionState === "failed") showIceFailure(code);
+            });
+            connection.peerConnection.addEventListener("connectionstatechange", () => {
+              if (connection.peerConnection.connectionState === "failed") showIceFailure(code);
+            });
+          }
           connection.on("open", () => {
             connection.send({ type: "join", name: playerName() });
             $("roomStatus").textContent = "Connected. Waiting for the host to start.";
@@ -1532,24 +1827,24 @@
             notify("The host connection closed.");
           });
           connection.on("error", () => {
-            $("roomStatus").textContent = "Unable to connect. Check the room code and internet connection.";
-          });
-          connection.on("iceStateChanged", (state) => {
-            if (state === "failed") {
-              $("roomStatus").textContent = "Direct connection failed. Check both internet connections or try another network.";
-            }
+            showIceFailure(code);
           });
           setTimeout(() => {
             if (!connection.open && roomCode === code) {
-                $("roomStatus").textContent = "Could not join yet. Check the code, ask the host to keep the room open, and make sure both of you use the same HTTPS link.";
-                $("createRoomButton").disabled = false;
-                $("joinRoomButton").disabled = false;
+              const peerConnection = connection.peerConnection;
+              if (peerConnection && (peerConnection.connectionState === "failed" || peerConnection.iceConnectionState === "failed")) {
+                showIceFailure(code);
+              } else {
+                $("roomStatus").textContent = "Could not connect. Check that the room code is current and both devices use the same HTTPS link. If the host is still waiting, the network may require a TURN relay.";
+              }
+              $("createRoomButton").disabled = false;
+              $("joinRoomButton").disabled = false;
             }
-            }, 20000);
+          }, 20000);
         });
         peer.on("error", (error) => {
-          $("roomStatus").textContent = "Connection error: " + error.type;
-          notify("Could not join that room.");
+          $("roomStatus").textContent = roomConnectionError(error);
+          notify(error.type === "peer-unavailable" ? "That room code is not active." : "Could not connect to the room.");
           $("createRoomButton").disabled = false;
           $("joinRoomButton").disabled = false;
         });
@@ -1564,8 +1859,20 @@
 
       function handleIncomingConnection(connection) {
         connection.on("error", () => {
-          $("roomStatus").textContent = "A friend failed to connect. Share the room code again and keep this page open.";
+          $("roomStatus").textContent = "A friend found the room, but their network could not establish the WebRTC link. Try both devices on the same Wi-Fi; some networks need a TURN relay.";
         });
+        connection.on("iceStateChanged", (state) => {
+          if (state === "failed") {
+            $("roomStatus").textContent = "A friend found the room, but their network blocked the direct link. A TURN relay may be required.";
+          }
+        });
+        if (connection.peerConnection) {
+          connection.peerConnection.addEventListener("iceconnectionstatechange", () => {
+            if (connection.peerConnection.iceConnectionState === "failed") {
+              $("roomStatus").textContent = "A friend found the room, but their network blocked the direct link. A TURN relay may be required.";
+            }
+          });
+        }
         connection.on("data", (message) => {
           if (message.type === "join") {
             players[connection.peer] = { name: String(message.name || "Player").slice(0, 18), score: 0, connected: true };
@@ -1626,7 +1933,7 @@
           prepareRound(message.roundIndex, message.locationIndex, false);
           $("roomStatus").textContent = "Playing with friends • room " + roomCode;
         } else if (message.type === "hint") {
-          applyCaseReward(message.name, message.css, message.emoji, message.hint);
+          applyCaseReward(message.name, message.css, message.emoji, message.hint, message.chance);
         } else if (message.type === "result") {
           const own = message.results.find((result) => result.id === myId);
           message.results.forEach((result) => {
