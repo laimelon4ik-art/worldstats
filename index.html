@@ -227,9 +227,11 @@
       }
 
       .case-box.legendary { --case-accent: #ffd36a; --case-accent-rgb: 255, 211, 106; }
+      .case-box.ultra { --case-accent: #ff557e; --case-accent-rgb: 255, 85, 126; }
+      .case-box.mythical { --case-accent: #ec77ff; --case-accent-rgb: 236, 119, 255; }
       .case-box.epic { --case-accent: #d39bff; --case-accent-rgb: 211, 155, 255; }
+      .case-box.super-rare { --case-accent: #44e3bb; --case-accent-rgb: 68, 227, 187; }
       .case-box.rare { --case-accent: #74d0ff; --case-accent-rgb: 116, 208, 255; }
-      .case-box.common { --case-accent: #c6d4e5; --case-accent-rgb: 198, 212, 229; }
 
       .case-art {
         position: relative;
@@ -414,9 +416,41 @@
       }
 
       .legendary { color: var(--gold); }
+      .ultra { color: #ff557e; }
+      .mythical { color: #ec77ff; }
       .epic { color: var(--purple); }
+      .super-rare { color: #44e3bb; }
       .rare { color: #74d0ff; }
-      .common { color: #dfe7f3; }
+
+      .game-view.blindfolded #streetView {
+        filter: blur(24px) brightness(0.24);
+        transform: scale(1.06);
+        pointer-events: none;
+      }
+
+      .blindfold-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: grid;
+        place-content: center;
+        gap: 10px;
+        padding: 24px;
+        background: radial-gradient(circle, rgba(10, 14, 27, 0.74), rgba(4, 7, 15, 0.9));
+        color: #fff;
+        text-align: center;
+        pointer-events: auto;
+      }
+
+      .blindfold-overlay strong {
+        color: #ff7892;
+        font-size: clamp(1.4rem, 4vw, 2.6rem);
+        letter-spacing: 0.12em;
+      }
+
+      .blindfold-overlay span {
+        color: #c5d3e5;
+      }
 
       @media (prefers-reduced-motion: reduce) {
         .case-box,
@@ -631,6 +665,18 @@
         display: block;
         margin-top: 8px;
         line-height: 1.5;
+      }
+
+      .case-map-label {
+        border: 1px solid rgba(114, 240, 255, 0.6);
+        border-radius: 7px;
+        background: rgba(5, 11, 20, 0.9);
+        color: #edf7ff;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        padding: 5px 7px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
 
       #notice {
@@ -1163,9 +1209,13 @@
     </header>
 
     <div class="layout">
-      <section class="game-view">
+      <section class="game-view" id="gameView">
         <iframe id="streetView" title="Street View location" allowfullscreen></iframe>
         <div class="streetview-link-blocker" aria-hidden="true"></div>
+        <div id="blindfoldOverlay" class="blindfold-overlay hidden" role="status">
+          <strong>ULTRA DROP · BLINDFOLD</strong>
+          <span>Street View is hidden until the timer ends.</span>
+        </div>
         <div class="scene-shade"></div>
         <div class="scene-top">
           <div class="scene-chip" id="sceneRound">ROUND 1 / 10</div>
@@ -1216,7 +1266,7 @@
 
         <section class="panel panel-inner case-panel">
           <div class="panel-header">World Tour · Supply Drop</div>
-          <div class="case-box ready common" id="caseBox" aria-label="Sealed World Tour supply case">
+          <div class="case-box ready rare" id="caseBox" aria-label="Sealed World Tour supply case">
             <div class="case-art" aria-hidden="true">
               <div class="case-art-top"></div>
               <div class="case-art-face">
@@ -1234,7 +1284,7 @@
           <button id="openCaseButton" class="case-button" onclick="openCase()">Unlock supply drop</button>
           <div class="case-status" id="casesLeft">Case ready: 1</div>
           <div id="caseResult" class="case-result hidden">
-            <strong id="caseRarity" class="common">Common</strong>
+            <strong id="caseRarity" class="rare">Rare</strong>
             <div id="caseReward">No reward yet.</div>
           </div>
         </section>
@@ -1322,17 +1372,61 @@
       let roundDurationSeconds = 90;
 
       const rewards = [
-        { name: "Legendary", css: "legendary", type: "coordinates", emoji: "💎", chance: 2 },
-        { name: "Epic", css: "epic", type: "city", emoji: "🟣", chance: 13 },
-        { name: "Rare", css: "rare", type: "country", emoji: "🔵", chance: 35 },
-        { name: "Common", css: "common", type: "continent", emoji: "⚪", chance: 50 },
+        { name: "Ultra", css: "ultra", type: "coordinates", emoji: "☄️", chance: 1, threshold: 1 },
+        { name: "Legendary", css: "legendary", type: "coordinates", emoji: "💎", chance: 3, threshold: 4 },
+        { name: "Mythical", css: "mythical", type: "street", emoji: "🔮", chance: 8, threshold: 12 },
+        { name: "Epic", css: "epic", type: "city", emoji: "🟣", chance: 18, threshold: 30 },
+        { name: "Super Rare", css: "super-rare", type: "country", emoji: "🟢", chance: 25, threshold: 55 },
+        { name: "Rare", css: "rare", type: "continent", emoji: "🔵", chance: 45, threshold: 100 },
       ];
+
+      const continentBounds = {
+        Africa: [[-35, -18], [37, 52]],
+        Asia: [[-10, 25], [78, 180]],
+        Europe: [[35, -12], [72, 40]],
+        "North America": [[5, -170], [83, -50]],
+        Oceania: [[-50, 110], [0, 180]],
+        "South America": [[-56, -82], [13, -34]],
+      };
+
+      const countryBounds = {
+        Argentina: [[-56, -74], [-21, -53]],
+        Australia: [[-44, 113], [-10, 154]],
+        Brazil: [[-34, -74], [5, -34]],
+        Canada: [[42, -141], [84, -52]],
+        Czechia: [[48, 12], [51, 19]],
+        Denmark: [[54, 8], [58, 15]],
+        Egypt: [[22, 25], [32, 36]],
+        France: [[42, -5], [51, 8]],
+        Iceland: [[63, -25], [67, -13]],
+        Italy: [[36, 6], [47, 19]],
+        Japan: [[24, 122], [46, 146]],
+        Kenya: [[-5, 34], [5, 42]],
+        Malaysia: [[0.8, 99.5], [7.5, 119.5]],
+        Mexico: [[14, -118], [33, -86]],
+        Morocco: [[27, -13], [36, -1]],
+        Netherlands: [[50, 3], [54, 7.5]],
+        "New Zealand": [[-47, 166], [-34, 179]],
+        Norway: [[58, 4], [71, 32]],
+        Poland: [[49, 14], [55, 25]],
+        Portugal: [[36, -10], [42, -6]],
+        Singapore: [[1.15, 103.6], [1.5, 104.1]],
+        "South Africa": [[-35, 16], [-22, 33]],
+        "South Korea": [[33, 124], [39, 130]],
+        Spain: [[36, -10], [44, 4]],
+        Sweden: [[55, 11], [70, 25]],
+        Thailand: [[5, 97], [21, 106]],
+        Turkey: [[35, 25], [43, 45]],
+        "United Kingdom": [[49, -8], [59, 2]],
+        "United States": [[24, -125], [50, -66]],
+      };
 
       let roundIndex = 0;
       let locationIndex = 0;
       let roundHeading = 0;
       let roundDeadline = 0;
       let roundTimerInterval = null;
+      let blindfoldTimeout = null;
       let roundExpired = false;
       let roundFinalized = false;
       let gameOrder = [];
@@ -1500,6 +1594,7 @@
           return;
         }
 
+        endBlindfold();
         roundIndex = index;
         locationIndex = placeIndex;
         roundHeading = Number.isFinite(heading) ? heading : Math.floor(Math.random() * 360);
@@ -1520,14 +1615,14 @@
         $("sceneTitle").textContent = "Look around. Find your clues. Drop your guess.";
         $("rewardText").textContent = "No reward unlocked";
         $("casesLeft").textContent = caseAvailable ? "Supply drop ready" : "No case this round";
-        $("caseBox").className = "case-box " + (caseAvailable ? "ready" : "locked") + " common";
+        $("caseBox").className = "case-box " + (caseAvailable ? "ready" : "locked") + " rare";
         $("caseBox").setAttribute("aria-label", caseAvailable ? "Sealed World Tour supply case ready to open" : "Supply case unavailable this round");
         $("caseTierLabel").textContent = caseAvailable ? "SEALED DROP · SERIES 01" : "DROP UNAVAILABLE";
         $("caseName").textContent = "WORLD TOUR SUPPLY CASE";
         $("caseEmoji").textContent = caseAvailable ? "✦" : "—";
         $("openCaseButton").disabled = !caseAvailable;
         $("caseResult").classList.add("hidden");
-        $("caseRarity").className = "common";
+        $("caseRarity").className = "rare";
         $("caseReward").textContent = "No reward yet.";
         $("sceneRound").textContent = "ROUND " + (roundIndex + 1) + " / " + roundsPerGame;
         $("multiplayerBadge").textContent = roomCode ? "ROOM " + roomCode : "SOLO GAME";
@@ -1552,42 +1647,131 @@
       }
 
       function openCase() {
-        if (locked || roundExpired || !caseAvailable || caseUsed) {
+        if (locked || roundExpired || !caseAvailable || caseUsed || roomCode && !gameStarted) {
           notify("No case is available this round.");
           return;
         }
         const place = activePlace();
         const roll = Math.random() * 100;
-        const reward = roll < 2 ? rewards[0] : roll < 15 ? rewards[1] : roll < 50 ? rewards[2] : rewards[3];
+        const reward = rewards.find((item) => roll < item.threshold);
         const hints = {
           coordinates: "Exact coordinates: " + place.lat.toFixed(4) + ", " + place.lon.toFixed(4),
+          street: "Street-level area: " + place.name,
           city: "City: " + place.city,
           country: "Country: " + place.country,
           continent: "Continent: " + place.continent,
         };
-        applyCaseReward(reward.name, reward.css, reward.emoji, hints[reward.type], reward.chance);
+        applyCaseReward(reward, hints[reward.type]);
+        highlightCaseReward(reward.type, place);
+        if (reward.name === "Ultra") triggerUltraBlindfold();
       }
 
-      function applyCaseReward(name, css, emoji, hint, chance) {
+      function applyCaseReward(reward, hint) {
         caseUsed = true;
         caseAvailable = 0;
         const box = $("caseBox");
         box.classList.remove("opening");
         void box.offsetWidth;
-        box.classList.remove("ready", "locked", "legendary", "epic", "rare", "common");
-        box.classList.add(css);
+        box.classList.remove("ready", "locked", "ultra", "legendary", "mythical", "epic", "super-rare", "rare");
+        box.classList.add(reward.css);
         box.classList.add("opening");
-        $("caseBox").setAttribute("aria-label", name + " supply case reward revealed");
-        $("caseTierLabel").textContent = name.toUpperCase() + " DROP · " + chance + "%";
-        $("caseName").textContent = name.toUpperCase() + " RECON CARD";
-        $("caseRarity").textContent = name + " · " + chance + "% drop";
-        $("caseRarity").className = css;
+        $("caseBox").setAttribute("aria-label", reward.name + " supply case reward revealed");
+        $("caseTierLabel").textContent = reward.name.toUpperCase() + " DROP · " + reward.chance + "%";
+        $("caseName").textContent = reward.name.toUpperCase() + " RECON CARD";
+        $("caseRarity").textContent = reward.name + " · " + reward.chance + "% drop";
+        $("caseRarity").className = reward.css;
         $("caseReward").textContent = hint;
         $("caseResult").classList.remove("hidden");
-        $("rewardText").textContent = emoji + " " + name + " • " + hint;
+        $("rewardText").textContent = reward.emoji + " " + reward.name + " • " + hint;
         $("casesLeft").textContent = "Case opened";
         $("openCaseButton").disabled = true;
-        $("caseEmoji").textContent = emoji;
+        $("caseEmoji").textContent = reward.emoji;
+      }
+
+      function highlightCaseReward(type, place) {
+        if (!map || !resultLayer) return;
+        const center = [place.lat, place.lon];
+        let layer;
+        let bounds;
+        let label;
+
+        if (type === "continent" || type === "country") {
+          const region = type === "continent" ? place.continent : place.country;
+          const regionBounds = (type === "continent" ? continentBounds : countryBounds)[region];
+          if (!regionBounds) {
+            notify("Could not find a map highlight for " + region + ".");
+            return;
+          }
+          bounds = L.latLngBounds(regionBounds);
+          layer = L.rectangle(bounds, {
+            color: type === "continent" ? "#49e6ff" : "#44e3bb",
+            fillColor: type === "continent" ? "#49e6ff" : "#44e3bb",
+            fillOpacity: 0.2,
+            weight: 3,
+            dashArray: type === "continent" ? "10 7" : "6 5",
+            interactive: false,
+          });
+          label = (type === "continent" ? "CONTINENT · " : "COUNTRY ZONE · ") + region.toUpperCase();
+        } else if (type === "city") {
+          layer = L.circle(center, {
+            radius: 9000,
+            color: "#d39bff",
+            fillColor: "#d39bff",
+            fillOpacity: 0.22,
+            weight: 3,
+            interactive: false,
+          });
+          label = "CITY · " + place.city.toUpperCase();
+        } else {
+          const radius = type === "street" ? 650 : 180;
+          layer = L.circle(center, {
+            radius,
+            color: type === "street" ? "#ec77ff" : "#ff557e",
+            fillColor: type === "street" ? "#ec77ff" : "#ff557e",
+            fillOpacity: 0.3,
+            weight: 4,
+            interactive: false,
+          });
+          label = type === "street" ? "MYTHICAL STREET AREA" : "EXACT COORDINATES";
+        }
+
+        layer.addTo(resultLayer);
+        if (!bounds) bounds = layer.getBounds();
+        layer.bindTooltip(label, { permanent: true, direction: "center", className: "case-map-label" }).openTooltip();
+        map.fitBounds(bounds.pad(0.25), { maxZoom: type === "continent" ? 4 : type === "country" ? 6 : 13 });
+      }
+
+      function startBlindfold(openerName, durationMs) {
+        if (!roomCode || !roundDeadline || Date.now() >= roundDeadline) return;
+        const expiresAt = Math.min(Date.now() + durationMs, roundDeadline);
+        const remaining = expiresAt - Date.now();
+        if (remaining <= 0) return;
+        clearTimeout(blindfoldTimeout);
+        $("blindfoldOverlay").querySelector("span").textContent =
+          openerName + " opened an Ultra case. Street View is hidden for " + Math.ceil(remaining / 1000) + " seconds.";
+        $("blindfoldOverlay").classList.remove("hidden");
+        $("gameView").classList.add("blindfolded");
+        $("streetView").setAttribute("inert", "");
+        blindfoldTimeout = setTimeout(endBlindfold, remaining);
+      }
+
+      function endBlindfold() {
+        clearTimeout(blindfoldTimeout);
+        blindfoldTimeout = null;
+        $("blindfoldOverlay").classList.add("hidden");
+        $("gameView").classList.remove("blindfolded");
+        $("streetView").removeAttribute("inert");
+      }
+
+      function triggerUltraBlindfold() {
+        if (!roomCode) return;
+        const openerId = myId;
+        const durationMs = Math.round(roundDurationSeconds * 500);
+        if (isHost) {
+          broadcastData({ type: "ultra-blindfold", openerId, durationMs });
+        } else {
+          sendRoomMessage({ type: "ultra-blindfold", openerId, durationMs });
+        }
       }
 
       function clearGuess() {
@@ -1756,6 +1940,7 @@
 
       function showRoundResult(results) {
         locked = true;
+        endBlindfold();
         clearInterval(roundTimerInterval);
         roundTimerInterval = null;
         $("roundTimer").classList.add("hidden");
@@ -1820,6 +2005,7 @@
       }
 
       function finishGame(standings) {
+        endBlindfold();
         clearInterval(roundTimerInterval);
         roundTimerInterval = null;
         gameStarted = false;
@@ -2061,6 +2247,11 @@
           broadcastLobby();
         } else if (message.type === "submit") {
           addSubmission(playerId, message.guess);
+        } else if (message.type === "ultra-blindfold" && gameStarted && !roundExpired &&
+            players[playerId]?.connected && playerId !== myId) {
+          const durationMs = Math.round(roundDurationSeconds * 500);
+          broadcastData({ type: "ultra-blindfold", openerId: playerId, durationMs });
+          startBlindfold(players[playerId].name, durationMs);
         }
       }
 
@@ -2113,9 +2304,16 @@
             updateHud();
           }
         } else if (message.type === "round") {
+          gameStarted = true;
           gameOrder = [];
           prepareRound(message.roundIndex, message.locationIndex, false, message.heading, message.deadline);
           $("roomStatus").textContent = "Playing with friends • room " + roomCode;
+        } else if (message.type === "ultra-blindfold") {
+          if (message.openerId !== myId) {
+            const openerName = players[message.openerId]?.name || "Another player";
+            const durationMs = Math.min(Math.max(0, message.durationMs), Math.round(roundDurationSeconds * 500));
+            startBlindfold(openerName, durationMs);
+          }
         } else if (message.type === "result") {
           const own = message.results.find((result) => result.id === myId);
           message.results.forEach((result) => {
